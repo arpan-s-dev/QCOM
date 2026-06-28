@@ -1,0 +1,30 @@
+{
+  "note": "Precomputed plate-solve results for demo night-sky photos. Match by filename substring or SHA-256 prefix of image bytes.",
+  "entries": [
+    {
+      "filename_contains": ["demo_night", "lodestar_night", "night_sky_demo"],
+      "true_north_heading_deg": 47.0,
+      "approximate_lat_deg": 37.7749,
+      "lat_uncertainty_deg": 0.8,
+      "matched_star_count": 12,
+      "message": "Demo night-sky reference (San Francisco field test)."
+    },
+    {
+      "filename_contains": ["night", "stars", "sky"],
+      "min_detected_stars": 8,
+      "true_north_heading_deg": 32.0,
+      "approximate_lat_deg": 37.77,
+      "lat_uncertainty_deg": 1.2,
+      "matched_star_count": 10,
+      "message": "Generic outdoor night-sky fallback for hackathon demo."
+    },
+    {
+      "content_hash_prefix": "e3b0c442",
+      "true_north_heading_deg": 0.0,
+      "approximate_lat_deg": 0.0,
+      "lat_uncertainty_deg": 5.0,
+      "matched_star_count": 0,
+      "message": "Placeholder hash entry — replace with SHA-256 prefix of teammate photo."
+    }
+  ]
+}

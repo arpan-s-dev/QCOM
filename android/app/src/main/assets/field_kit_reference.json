@@ -1,0 +1,96 @@
+{
+  "disclaimer": "Reference information only — not medical advice, diagnosis, or prescription. Seek professional care when possible.",
+  "items": [
+    {
+      "name": "Antiseptic wipes",
+      "what_it_is_for": "Cleaning skin around a wound before dressing; reducing contamination risk.",
+      "how_to_use_safely": "Wipe outward from the wound edge once; do not reuse wipes; avoid inside deep wounds or eyes.",
+      "warning": "Reference info only. If the wound is deep, spurting, or heavily contaminated, prioritize bleeding control and evacuation.",
+      "is_medicine": false
+    },
+    {
+      "name": "Sterile gauze / dressing",
+      "what_it_is_for": "Covering wounds and absorbing blood after bleeding is controlled.",
+      "how_to_use_safely": "Apply direct pressure through gauze; replace when soaked; secure without cutting off circulation.",
+      "warning": "Does not replace pressure or tourniquet for life-threatening bleeding.",
+      "is_medicine": false
+    },
+    {
+      "name": "Commercial tourniquet",
+      "what_it_is_for": "Stopping life-threatening limb bleeding when direct pressure fails.",
+      "how_to_use_safely": "Place 2–3 inches above the wound toward the torso; tighten until bleeding stops; note time applied on the device or skin.",
+      "warning": "Causes pain — that is expected. Do not remove once applied unless you are trained to do so and evacuation is imminent.",
+      "is_medicine": false
+    },
+    {
+      "name": "Adhesive bandages",
+      "what_it_is_for": "Small cuts and abrasions after cleaning.",
+      "how_to_use_safely": "Clean and dry the area; change if wet or dirty; watch for increased redness or swelling.",
+      "warning": "Not for large, deep, or heavily bleeding wounds.",
+      "is_medicine": false
+    },
+    {
+      "name": "Oral pain reliever (general OTC)",
+      "what_it_is_for": "May help with mild to moderate pain when appropriate for the person.",
+      "how_to_use_safely": "Use only if the person can swallow safely and is not allergic. Follow the exact directions on the package label.",
+      "warning": "Follow package directions; this is reference info, not a prescription; seek a medic when possible. Never guess a dose for someone else's condition.",
+      "is_medicine": true
+    },
+    {
+      "name": "Oral antihistamine (general OTC)",
+      "what_it_is_for": "May help with mild allergic reactions such as itching or hives when breathing is normal.",
+      "how_to_use_safely": "Use only if the person can swallow safely. Follow the exact directions on the package label.",
+      "warning": "Follow package directions; reference info, not a prescription; seek a medic when possible. If breathing difficulty, swelling of face/throat, or wheezing — treat as emergency.",
+      "is_medicine": true
+    },
+    {
+      "name": "Oral rehydration salts (ORS)",
+      "what_it_is_for": "Replacing fluids and electrolytes after dehydration from vomiting, diarrhea, or heat.",
+      "how_to_use_safely": "Mix exactly as the packet label states; give small sips if the person is conscious and can swallow.",
+      "warning": "Reference info only. If the person is confused, not urinating, or cannot keep fluids down — seek evacuation.",
+      "is_medicine": false
+    },
+    {
+      "name": "Burn dressing / gel",
+      "what_it_is_for": "Covering minor burns after brief cooling with clean water.",
+      "how_to_use_safely": "Cool small burns with clean water 10–20 minutes first; apply a sterile non-stick dressing loosely; do not use ice.",
+      "warning": "Do not use on large or deep burns — cover loosely and treat for shock instead.",
+      "is_medicine": false
+    },
+    {
+      "name": "Medical tape",
+      "what_it_is_for": "Securing dressings without relying on adhesive directly on the wound.",
+      "how_to_use_safely": "Tape around the dressing edges; check fingers/toes for color and warmth after securing.",
+      "warning": "Remove or loosen if numbness, tingling, or swelling occurs distal to the tape.",
+      "is_medicine": false
+    },
+    {
+      "name": "Antibiotic ointment (topical)",
+      "what_it_is_for": "May reduce infection risk on minor clean cuts after rinsing.",
+      "how_to_use_safely": "Apply a thin layer to the skin around a minor wound; cover with a clean dressing. Use only on intact skin margins, not inside deep punctures.",
+      "warning": "Topical reference only — not for internal use. Follow package directions; seek a medic for deep, dirty, or animal bites.",
+      "is_medicine": true
+    },
+    {
+      "name": "Nitrile gloves",
+      "what_it_is_for": "Barrier protection for you and the casualty during wound care.",
+      "how_to_use_safely": "Don before contact with blood or body fluids; remove without touching the outer surface; wash hands after.",
+      "warning": "Gloves reduce contamination risk but do not replace proper bleeding control technique.",
+      "is_medicine": false
+    },
+    {
+      "name": "Trauma shears / scissors",
+      "what_it_is_for": "Cutting clothing away from injuries; trimming tape or dressings.",
+      "how_to_use_safely": "Cut away from the body; keep tips blunt-side toward skin; expose the wound without pulling embedded objects.",
+      "warning": "Do not probe wounds or remove impaled objects — expose and stabilize only.",
+      "is_medicine": false
+    },
+    {
+      "name": "Elastic bandage (ACE wrap)",
+      "what_it_is_for": "Light support and holding dressings on limbs after bleeding is controlled.",
+      "how_to_use_safely": "Wrap from distal to proximal with even pressure; leave toes/fingers visible to check circulation.",
+      "warning": "Never use as a tourniquet substitute. Loosen if the limb becomes cold, blue, or numb.",
+      "is_medicine": false
+    }
+  ]
+}

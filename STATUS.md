@@ -1,31 +1,71 @@
 # STATUS.md — Live Dashboard
 
-> Single source of truth for build state. Every agent updates this on finishing a task. Status values: `TODO` · `IN_PROGRESS` · `BLOCKED` · `DONE`.
+> Updated 2026-06-28 (Cursor NPU agent). **Read HANDOFF.md for full context.**
 
 ## DE-RISK GATE
-**Stock `.pte` running on NPU + QNN version pinned?  [ ] NO**
-> Nothing custom ships until this is YES. (Person 1 flips it after the first model runs on the NPU and the version is recorded in DECISIONS.md.)
+**Stock `.pte` on NPU + QNN pinned?  [ ] NO**
+
+---
+
+## MASTER CHECKLIST
+
+### Environment (Person 1)
+- [x] QNN 2.37.0.250724 installed
+- [x] NDK 26c + ExecuTorch v1.0 cloned
+- [x] venv `~/lodestar-venv` (use `runtime/scripts/fix_venv.sh` if broken)
+- [x] `verify_env.sh` all passed (re-verified 2026-06-28 in WSL)
+- [ ] S25 Ultra adb `device` (R3CXC07ZZWL) — **Windows adb** (WSL sees 0 devices; plug USB + confirm in Windows)
+- [ ] **`build_executorch.sh`** ← **IN PROGRESS** (WSL PID ~5892; log `~/lodestar-build.log`)
+- [ ] `export_deeplab.sh` + `run_deeplab_device.sh`
+- [ ] DE-RISK GATE YES
+
+### Integration (Claude APP + gh)
+- [ ] Merge `p2/integrate-lodestar-v1` + `feature/star-navigation` → **`demo/final`**
+- [ ] Java 17 for Gradle (not Java 25)
+- [ ] `gradlew.bat installDebug` on S25
+- [ ] PR `demo/final` → `main` via `gh`
+
+### Models (Cursor NPU — after gate)
+- [ ] Llama 3.2 3B Q4 `.pte` on NPU
+- [ ] Whisper on NPU
+- [ ] RealAiService backend wired
+- [ ] BGE embedder + corpus vectors (if time)
+
+### Demo (Claude SHIP + Ranji)
+- [ ] README team names filled
+- [ ] DEMO.md 5-min script rehearsed
+- [ ] Airplane-mode end-to-end on S25
+
+---
 
 ## Components
-| Component | Owner | Status | Notes | Last updated |
-|---|---|---|---|---|
-| QNN env + stock `.pte` on NPU | P1 | TODO | THE GATE. Do first. | — |
-| Llama 3.2 3B (Q4) on NPU | P1 | TODO | 1B fallback if <10 tok/s or throttling | — |
-| Whisper-Base/Tiny on NPU | P1 | TODO | From AI Hub | — |
-| `AiService` real impl (transcribe/generate) | P1 | TODO | Replaces StubAiService | — |
-| Airplane-mode harness + NPU metrics | P1 | TODO | The 40% evidence | — |
-| BGE-small embedder (for RAG) | P1 | TODO | NPU or CPU | — |
-| Compose shell + status strip | P2 | TODO | Runs on StubAiService | — |
-| `StubAiService` (canned) | P2 | TODO | Unblocks app before models | — |
-| Medical first-aid corpus (TCCC/MARCH) | P2 | TODO | ~200–400 chunks | — |
-| RAG retrieval + grounded prompt | P2 | TODO | top-k cosine, cite sources | — |
-| Deterministic safety tree | P2 | TODO | Authoritative over LLM; test negation | — |
-| Voice loop (mic→STT→RAG→LLM→TTS) | P2 | TODO | Android native TTS out | — |
-| Solar compass (heading) | P2 | TODO | Verify math in Python first | — |
-| GPS spoof detection + 3-tier fallback | P2 | TODO | Mock-location demo on real phone | — |
-| Translation | P2 | TODO | Bonus — only if core solid | — |
-| SOS card | P2 | TODO | Bonus — only if core solid | — |
-| README + MIT license + diagram | P2 | TODO | Required for eligibility | — |
 
-## Current Blockers
-_(none yet — add here as they appear, with owner + what's needed)_
+| Component | Status | Notes |
+|-----------|--------|-------|
+| QNN env + NPU gate | IN_PROGRESS | verify_env OK; build_executorch running (CMake configure phase) |
+| Llama / Whisper / RealAiService | TODO | After gate |
+| Android app features | DONE (code) | star-nav, hospitals, field kit, triage |
+| Android build + corpus APK | DONE on `p2/integrate-lodestar-v1` | needs merge to demo/final |
+| UI polish / animations | TODO | Claude APP after merge |
+| NPU metrics harness | TODO | If time |
+
+---
+
+## Active agents
+
+| Agent | Tool | Task | Status |
+|-------|------|------|--------|
+| NPU | Cursor | build_executorch + gate | IN_PROGRESS |
+| APP | Claude | merge → demo/final + install | TODO |
+| SHIP | Claude | README + DEMO | TODO |
+| GIT | gh (Ranji) | PR merge | TODO |
+
+---
+
+## Blockers
+
+| Blocker | Fix |
+|---------|-----|
+| `build_executorch` running (~30–60 min) | Monitor: `wsl tail -f ~/lodestar-build.log` |
+| Branches split | Claude APP: merge to `demo/final` |
+| Gradle Java 25 | Set JAVA_HOME to JDK 17 |
