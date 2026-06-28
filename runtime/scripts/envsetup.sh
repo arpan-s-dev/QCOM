@@ -20,19 +20,26 @@ export EXECUTORCH_ROOT
 export QCOM_CHIPSET="${QCOM_CHIPSET:-SM8750}"
 export DEVICE_DIR="${DEVICE_DIR:-/data/local/tmp/lodestar}"
 
-# QNN SDK env (official)
+# QNN SDK env (official) — avoid unbound PYTHONPATH under set -u
+export PYTHONPATH="${PYTHONPATH:-}"
 if [[ -f "$QNN_SDK_ROOT/bin/envsetup.sh" ]]; then
+  set +u
   # shellcheck disable=SC1091
   source "$QNN_SDK_ROOT/bin/envsetup.sh"
+  set -u
 else
   echo "WARNING: QNN envsetup not found at $QNN_SDK_ROOT/bin/envsetup.sh" >&2
   export LD_LIBRARY_PATH="${QNN_SDK_ROOT}/lib/x86_64-linux-clang/:${LD_LIBRARY_PATH:-}"
 fi
 
-export PYTHONPATH="${EXECUTORCH_ROOT}/..:${PYTHONPATH:-}"
+export PYTHONPATH="${EXECUTORCH_ROOT}:${EXECUTORCH_ROOT}/..:${PYTHONPATH}"
 
-# Runtime venv if present
-if [[ -f "$RUNTIME_DIR/.venv/bin/activate" ]]; then
+# Python venv — prefer native Linux path (see fix_venv.sh)
+VENV_DIR="${LODESTAR_VENV:-$HOME/lodestar-venv}"
+if [[ -f "$VENV_DIR/bin/activate" ]]; then
+  # shellcheck disable=SC1091
+  source "$VENV_DIR/bin/activate"
+elif [[ -f "$RUNTIME_DIR/.venv/bin/activate" ]]; then
   # shellcheck disable=SC1091
   source "$RUNTIME_DIR/.venv/bin/activate"
 fi
@@ -42,6 +49,14 @@ if [[ -n "${ADB_SERIAL:-}" ]]; then
   export ADB="adb -s $ADB_SERIAL"
 else
   export ADB="adb"
+fi
+
+# WSL2: use Windows adb server so USB devices work (WSL cannot see USB natively)
+if grep -qi microsoft /proc/version 2>/dev/null; then
+  WIN_HOST="$(grep nameserver /etc/resolv.conf 2>/dev/null | awk '{print $2}')"
+  if [[ -n "$WIN_HOST" ]]; then
+    export ADB_SERVER_SOCKET="tcp:${WIN_HOST}:5037"
+  fi
 fi
 
 echo "Lodestar env ready:"

@@ -1,64 +1,71 @@
 # STATUS.md — Live Dashboard
 
-
-
-> Single source of truth. Updated after every session.
-
-
+> Updated 2026-06-28 (Cursor NPU agent). **Read HANDOFF.md for full context.**
 
 ## DE-RISK GATE
-
-**Stock `.pte` running on NPU + QNN version pinned?  [ ] NO**
-
-
+**Stock `.pte` on NPU + QNN pinned?  [ ] NO**
 
 ---
 
+## MASTER CHECKLIST
 
+### Environment (Person 1)
+- [x] QNN 2.37.0.250724 installed
+- [x] NDK 26c + ExecuTorch v1.0 cloned
+- [x] venv `~/lodestar-venv` (use `runtime/scripts/fix_venv.sh` if broken)
+- [x] `verify_env.sh` all passed (re-verified 2026-06-28 in WSL)
+- [ ] S25 Ultra adb `device` (R3CXC07ZZWL) — **Windows adb** (WSL sees 0 devices; plug USB + confirm in Windows)
+- [ ] **`build_executorch.sh`** ← **IN PROGRESS** (WSL PID ~5892; log `~/lodestar-build.log`)
+- [ ] `export_deeplab.sh` + `run_deeplab_device.sh`
+- [ ] DE-RISK GATE YES
+
+### Integration (Claude APP + gh)
+- [ ] Merge `p2/integrate-lodestar-v1` + `feature/star-navigation` → **`demo/final`**
+- [ ] Java 17 for Gradle (not Java 25)
+- [ ] `gradlew.bat installDebug` on S25
+- [ ] PR `demo/final` → `main` via `gh`
+
+### Models (Cursor NPU — after gate)
+- [ ] Llama 3.2 3B Q4 `.pte` on NPU
+- [ ] Whisper on NPU
+- [ ] RealAiService backend wired
+- [ ] BGE embedder + corpus vectors (if time)
+
+### Demo (Claude SHIP + Ranji)
+- [ ] README team names filled
+- [ ] DEMO.md 5-min script rehearsed
+- [ ] Airplane-mode end-to-end on S25
+
+---
 
 ## Components
 
-| Component | Status | Notes | Last updated |
+| Component | Status | Notes |
+|-----------|--------|-------|
+| QNN env + NPU gate | IN_PROGRESS | verify_env OK; build_executorch running (CMake configure phase) |
+| Llama / Whisper / RealAiService | TODO | After gate |
+| Android app features | DONE (code) | star-nav, hospitals, field kit, triage |
+| Android build + corpus APK | DONE on `p2/integrate-lodestar-v1` | needs merge to demo/final |
+| UI polish / animations | TODO | Claude APP after merge |
+| NPU metrics harness | TODO | If time |
 
-|---|---|---|---|
+---
 
-| QNN env + stock `.pte` on NPU | IN_PROGRESS | setup_wsl.sh / pip installing torch | 2026-06-28 |
+## Active agents
 
-| Llama / Whisper / RealAiService | TODO | After gate | — |
+| Agent | Tool | Task | Status |
+|-------|------|------|--------|
+| NPU | Cursor | build_executorch + gate | IN_PROGRESS |
+| APP | Claude | merge → demo/final + install | TODO |
+| SHIP | Claude | README + DEMO | TODO |
+| GIT | gh (Ranji) | PR merge | TODO |
 
-| **SF hospitals (offline)** | **DONE** | `sf_hospitals.json` + nearest-3 panel on ORIENT | 2026-06-28 |
+---
 
-| **Field-kit reference** | **DONE** | `field_kit_reference.json` + FIELD KIT tab under TREAT | 2026-06-28 |
-
-| **Medical triage (SafetyTree + RAG)** | DONE | SafetyTree authoritative; corpus action-oriented | 2026-06-28 |
-
-| **Status strip** | DONE | Position source pill only — **airplane badge removed** | 2026-06-28 |
-
-| Compose UI + nav | DONE | TREAT / ORIENT / COMMUNICATE | 2026-06-28 |
-
-| **Night-sky star navigation** | **DONE** | `CvStarDetector` + `StarSolver` + `yale_bright_stars.json` + ORIENT Solar/Night modes | 2026-06-28 |
-
-| NPU metrics / harness | TODO | If time | — |
-
-
-
-## Scope notes (2026-06-28)
-
-- Hospitals: **San Francisco only**, baked JSON, approximate cached GPS — label says "near your approximate area"
-
-- Medical: **actions + kit reference** — never drug dosing or prescriptions
-
-- No runtime network calls; no decorative airplane-mode icon
-
-
-
-## Current Blockers
+## Blockers
 
 | Blocker | Fix |
-
-|---|---|
-
-| setup_wsl / torch install | Wait for pip to finish on WSL |
-
-| Gradle build on Windows | Java 17 + Compose compiler plugin (build agent) |
-
+|---------|-----|
+| `build_executorch` running (~30–60 min) | Monitor: `wsl tail -f ~/lodestar-build.log` |
+| Branches split | Claude APP: merge to `demo/final` |
+| Gradle Java 25 | Set JAVA_HOME to JDK 17 |

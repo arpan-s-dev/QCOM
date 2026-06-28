@@ -33,6 +33,17 @@ else
   echo "  WARN g++ $GPP_VER < 13 (may fail ExecuTorch build)" >&2
 fi
 
+CMAKE_VER=$(cmake --version 2>/dev/null | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' || echo "0.0.0")
+CMAKE_MAJOR=$(echo "$CMAKE_VER" | cut -d. -f1)
+CMAKE_MINOR=$(echo "$CMAKE_VER" | cut -d. -f2)
+if [[ "$CMAKE_MAJOR" -gt 3 ]] || [[ "$CMAKE_MAJOR" -eq 3 && "$CMAKE_MINOR" -ge 29 ]]; then
+  echo "  OK  cmake version $CMAKE_VER ($(command -v cmake))"
+else
+  echo "  FAIL cmake $CMAKE_VER < 3.29 (ExecuTorch v1.0+ requirement)" >&2
+  echo "        Fix: source lodestar-venv and run: pip install 'cmake>=3.29,<4.0'" >&2
+  ERR=1
+fi
+
 DEVICE_COUNT=$($ADB devices 2>/dev/null | grep -c 'device$' || true)
 if [[ "$DEVICE_COUNT" -ge 1 ]]; then
   echo "  OK  adb device(s) connected: $DEVICE_COUNT"
@@ -45,6 +56,14 @@ if [[ -f "$QNN_SDK_ROOT/QNN_ReleaseNotes.txt" ]]; then
   echo ""
   echo "QNN SDK release notes (pin this version in DECISIONS.md):"
   head -5 "$QNN_SDK_ROOT/QNN_ReleaseNotes.txt"
+fi
+
+if ! python -c "import yaml" 2>/dev/null; then
+  echo "  FAIL python module 'yaml' (PyYAML) missing — ExecuTorch codegen needs it" >&2
+  echo "        Fix: pip install pyyaml  (or bash runtime/scripts/fix_venv.sh)" >&2
+  ERR=1
+else
+  echo "  OK  python PyYAML"
 fi
 
 if [[ "$ERR" -ne 0 ]]; then

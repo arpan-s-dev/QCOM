@@ -1,5 +1,8 @@
 # Root .gitignore
 
+# Local git worktrees (not part of the repo)
+.worktrees/
+
 # Person 2 zip upload (replaced by extracted source)
 track2manjeet.zip
 track2manjeet-extracted/

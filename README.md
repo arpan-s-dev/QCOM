@@ -8,7 +8,7 @@ Built by:
 - **[Person 1 Name]** — [email] — on-device AI models (ExecuTorch + QNN)
 - **[Person 2 Name]** — [email] — app, medical corpus, navigation, pitch
 
-License: MIT (see `LICENSE`). **Setup:** see `SETUP.md`.
+License: MIT (see `LICENSE`). **New chat / agents:** read **`HANDOFF.md`** first. Copilot prompts: **`COPILOT_AGENTS.md`**. Setup: `SETUP.md`.
 
 ---
 

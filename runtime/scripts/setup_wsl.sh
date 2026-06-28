@@ -61,16 +61,24 @@ else
   echo "==> ExecuTorch already cloned at $EXECUTORCH_ROOT"
 fi
 
-# Python venv for export scripts
-VENV_DIR="$RUNTIME_DIR/.venv"
+# Python venv on native Linux disk (NEVER on /mnt/c OneDrive — cmake breaks on spaces + slow FS)
+VENV_DIR="${LODESTAR_VENV:-$HOME/lodestar-venv}"
 if [[ ! -d "$VENV_DIR" ]]; then
   python3 -m venv "$VENV_DIR"
 fi
 # shellcheck disable=SC1091
 source "$VENV_DIR/bin/activate"
-pip install --upgrade pip
+pip install --upgrade pip wheel setuptools
+# ExecuTorch v1.0+ requires CMake 3.29+ (Ubuntu 22.04 apt ships 3.28)
+pip install 'cmake>=3.29,<4.0'
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-pip install -e "$EXECUTORCH_ROOT"
+# Do NOT pip install -e executorch (cmake build fails on OneDrive paths). Use PYTHONPATH instead.
+if [[ -f "$EXECUTORCH_ROOT/requirements-examples.txt" ]]; then
+  pip install -r "$EXECUTORCH_ROOT/requirements-examples.txt" || true
+fi
+pip install hydra-core omegaconf pyyaml pandas tabulate flatbuffers || true
+# Remove legacy broken venv if present
+[[ -d "$RUNTIME_DIR/.venv" ]] && rm -rf "$RUNTIME_DIR/.venv"
 
 # --- env file ---
 ENV_FILE="$RUNTIME_DIR/.env"
