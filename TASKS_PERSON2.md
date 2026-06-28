@@ -26,10 +26,8 @@
 - [x] **P2.11** Pitch outline + DEMO.md
 - [x] **P2.12** README + MIT LICENSE + architecture diagram
 
+## Phase 4 — Verification
+- [~] **P2.13** Run local Android Gradle verification (`./gradlew test`) and capture any integration fixes needed. _(IN_PROGRESS — Copilot CLI)_
+
 ## Integration note (2026-06-28)
 Person 2's zip (`track2manjeet.zip`) was extracted into `android/`, `corpus/`, `scripts/`, `docs/` on branch `integrate/lodestar-v1`. See `SETUP.md` for build instructions.
-
-## Integration hardening (2026-06-28)
-- [x] **P2.13** Make `android/` build cleanly with `./gradlew.bat test` on Windows (Compose plugin, theme/resources, icon assets, dependency fixes).
-- [x] **P2.14** Bundle `corpus/first_aid_corpus.json` into `android/app/src/main/assets/` and load it through `android/app/.../data/CorpusLoader.kt` at app startup.
-- [x] **P2.15** Replace README placeholder identities with real team names/emails.
