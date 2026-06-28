@@ -19,7 +19,7 @@
 - [x] **P2.6** `SolarCompass.kt` + AR overlay composable
 - [x] **P2.7** GPS spoof detection + mock-location demo steps in DEMO.md
 - [x] **P2.8** `PositionSource` state machine wired to status strip
-- [x] **P2.13** Wire real GPS + airplane-mode state into nav status strip and `MainViewModel`. _(DONE — Copilot CLI, branch `p1/nav-wire`; Gradle test run is currently blocked by the existing Compose compiler plugin config.)_
+- [x] **P2.13** Wire real GPS + airplane-mode state into nav status strip and `MainViewModel`. _(DONE — Copilot CLI, branch `p1/nav-wire`; manual JVM JUnit run passed for nav/core tests while the repo's Gradle test task remains blocked by the existing Compose compiler plugin config.)_
 
 ## Phase 3 — Bonus + Pitch
 - [x] **P2.9** Translation screen

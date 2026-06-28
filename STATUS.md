@@ -23,7 +23,7 @@
 | Voice loop (mic→STT→RAG→LLM→TTS) | P2 | DONE | Wired; stub ASR until P1 | 2026-06-28 |
 | Solar compass (heading) | P2 | DONE | 4/4 Python solar sanity checks pass | 2026-06-28 |
 | GPS spoof detection + 3-tier fallback | P2 | DONE | Unit tests + demo steps in DEMO.md | 2026-06-28 |
-| GPS + airplane-mode live wiring | P2 | DONE | `LocationManager` + spoof freeze + live airplane badge wired on `p1/nav-wire`; Gradle test task is blocked by existing Compose compiler plugin config | 2026-06-28 |
+| GPS + airplane-mode live wiring | P2 | DONE | `LocationManager` + spoof freeze + live airplane badge wired on `p1/nav-wire`; manual JVM JUnit run passed (26 tests) while repo Gradle test task is still blocked by existing Compose compiler plugin config | 2026-06-28 |
 | Translation | P2 | DONE | Bonus screen wired | 2026-06-28 |
 | SOS card | P2 | DONE | Bonus screen wired | 2026-06-28 |
 | README + MIT license + diagram | P2 | DONE | Root README.md + LICENSE | 2026-06-28 |
