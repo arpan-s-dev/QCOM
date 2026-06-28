@@ -2,6 +2,7 @@ package com.medic.app.ui.components
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -65,7 +66,7 @@ private fun SectionTab(
     )
     val verticalPad by animateDpAsState(
         targetValue = if (selected) 12.dp else 10.dp,
-        animationSpec = LodestarMotion.colorCrossfade,
+        animationSpec = tween(durationMillis = 500),
         label = "tab-pad-${section.name}"
     )
 

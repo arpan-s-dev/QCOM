@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.medic.app.core.Severity
 import com.medic.app.ui.theme.*
@@ -75,12 +76,11 @@ private fun AnimatedMessageBubble(msg: ChatMessage) {
 
     AnimatedVisibility(
         visible = visible,
-        enter = fadeIn(LodestarMotion.messageEnter) +
+        enter = fadeIn(tween(durationMillis = LodestarMotion.messageEnterMillis)) +
             slideInVertically(
-                animationSpec = LodestarMotion.messageEnter,
+                animationSpec = tween<IntOffset>(durationMillis = LodestarMotion.messageEnterMillis),
                 initialOffsetY = { it / 3 }
-            ),
-        modifier = Modifier.animateItem()
+            )
     ) {
         MessageBubble(msg)
     }

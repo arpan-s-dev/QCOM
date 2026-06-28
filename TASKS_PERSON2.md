@@ -27,5 +27,8 @@
 - [x] **P2.11** Pitch outline + DEMO.md
 - [x] **P2.12** README + MIT LICENSE + architecture diagram
 
+## Phase 4 — Verification
+- [~] **P2.13** Run local Android Gradle verification (`./gradlew test`) and capture any integration fixes needed. _(IN_PROGRESS — Copilot CLI)_
+
 ## Integration note (2026-06-28)
 Person 2's zip (`track2manjeet.zip`) was extracted into `android/`, `corpus/`, `scripts/`, `docs/` on branch `integrate/lodestar-v1`. See `SETUP.md` for build instructions.

@@ -1,28 +1,36 @@
 package com.medic.app.nav.star
 
 import android.content.Context
-import org.json.JSONObject
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.double
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 object StarCatalogLoader {
+    private val json = Json { ignoreUnknownKeys = true }
+
     fun load(context: Context): StarCatalog {
         val json = context.assets.open("yale_bright_stars.json").bufferedReader().use { it.readText() }
         return parse(json)
     }
 
-    fun parse(json: String): StarCatalog {
-        val root = JSONObject(json)
-        val name = root.optString("catalog", "Yale Bright Star Catalog")
-        val stars = root.getJSONArray("stars")
+    fun parse(jsonText: String): StarCatalog {
+        val root = json.parseToJsonElement(jsonText).jsonObject
+        val name = root["catalog"]?.jsonPrimitive?.contentOrNull ?: "Yale Bright Star Catalog"
+        val stars = root.getValue("stars").jsonArray
         val list = buildList {
-            for (i in 0 until stars.length()) {
-                val o = stars.getJSONObject(i)
+            for (star in stars) {
+                val o = star.jsonObject
+                val id = o.getValue("id").jsonPrimitive.content
                 add(
                     CatalogStar(
-                        id = o.getString("id"),
-                        name = o.optString("name", o.getString("id")),
-                        raHours = o.getDouble("ra_hours"),
-                        decDeg = o.getDouble("dec_deg"),
-                        magnitude = o.getDouble("mag")
+                        id = id,
+                        name = o["name"]?.jsonPrimitive?.contentOrNull ?: id,
+                        raHours = o.getValue("ra_hours").jsonPrimitive.double,
+                        decDeg = o.getValue("dec_deg").jsonPrimitive.double,
+                        magnitude = o.getValue("mag").jsonPrimitive.double
                     )
                 )
             }

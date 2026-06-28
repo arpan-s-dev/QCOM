@@ -3,6 +3,7 @@ package com.medic.app.nav.star
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.net.Uri
 import java.io.InputStream
 import java.security.MessageDigest
@@ -25,7 +26,10 @@ class StarNavigationPipeline(
         deviceAzimuthDeg: Double,
         utc: Instant = Instant.now()
     ): StarNavigationResult {
-        val detection = detector.detect(bitmap)
+        val detection = when (detector) {
+            is CvStarDetector -> detector.detect(bitmap)
+            else -> detector.detect(bitmap.toGrayscalePixels(), bitmap.width, bitmap.height)
+        }
         val solveContext = StarSolveContext(
             detection = detection,
             imageFileName = imageFileName,
@@ -78,6 +82,21 @@ class StarNavigationPipeline(
 
         fun hashUri(context: Context, uri: Uri): String {
             return context.contentResolver.openInputStream(uri)?.use { hashStream(it) }.orEmpty()
+        }
+
+        private fun Bitmap.toGrayscalePixels(): IntArray {
+            val pixels = IntArray(width * height)
+            for (y in 0 until height) {
+                for (x in 0 until width) {
+                    val color = getPixel(x, y)
+                    pixels[y * width + x] = (
+                        Color.red(color) * 0.299 +
+                            Color.green(color) * 0.587 +
+                            Color.blue(color) * 0.114
+                    ).toInt()
+                }
+            }
+            return pixels
         }
     }
 }
