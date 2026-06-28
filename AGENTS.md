@@ -29,9 +29,23 @@
 If a task is `IN_PROGRESS` by the other person, **don't touch those files** — pick a different task. The TASKS files + STATUS.md are the single source of truth; trust them over memory.
 
 ## The Shared Interface
-The app talks to models only through `AiService`:
+The app talks to models only through `AiService` in `android/app/src/main/java/com/medic/app/ai/AiService.kt`.
+
+**Canonical interface (expanded 2026-06-28 — see DECISIONS.md):**
 ```kotlin
-suspend fun transcribe(audioPath: String): String
+val isReady: Boolean
+suspend fun embed(text: String): FloatArray
 suspend fun generate(prompt: String): String
+suspend fun transcribe(audioPcm16: ShortArray): String
+suspend fun translate(text: String, fromLang: String, toLang: String): String
 ```
-Person 2 builds against `StubAiService` (canned strings) until Person 1's real implementation lands. Don't change this interface without noting it in DECISIONS.md.
+Person 2 builds against `StubAiService` until Person 1's real implementation lands. Don't change this interface without noting it in DECISIONS.md.
+
+## Repo Layout (post-integration)
+| Path | Owner | Contents |
+|---|---|---|
+| `runtime/` | P1 | ExecuTorch/QNN scripts, model export |
+| `android/` | Both | Gradle project; P1 owns `.../ai` impl, P2 owns `.../ui`, `.../nav`, `.../data` |
+| `corpus/` | P2 | First-aid JSON corpus |
+| `scripts/` | P2 | Python verification scripts |
+| `docs/` | P2 | Pitch outline |

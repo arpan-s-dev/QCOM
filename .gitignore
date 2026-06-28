@@ -1,0 +1,28 @@
+# Root .gitignore
+
+# Person 2 zip upload (replaced by extracted source)
+track2manjeet.zip
+track2manjeet-extracted/
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+*.iml
+.idea/
+
+# Runtime secrets / artifacts
+runtime/.env
+runtime/.venv/
+runtime/models/
+*.pte
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db
