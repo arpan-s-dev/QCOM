@@ -15,6 +15,8 @@
 | `AiService` real impl | P1 | TODO | Replaces StubAiService; see expanded interface in DECISIONS.md | — |
 | Airplane-mode harness + NPU metrics | P1 | TODO | The 40% evidence | — |
 | BGE-small embedder (for RAG) | P1 | TODO | NPU or CPU | — |
+| Android gradle test | P2 | DONE | PASS — `./gradlew.bat test` succeeds in clean P2 worktree with local JDK 21 + Android SDK | 2026-06-28 |
+| Bundled corpus asset loader | P2 | DONE | `first_aid_corpus.json` copied into app assets; `CorpusLoader` populates `MainViewModel` on init | 2026-06-28 |
 | Compose shell + status strip | P2 | DONE | `android/app/.../ui` | 2026-06-28 |
 | `StubAiService` (canned) | P2 | DONE | `android/app/.../ai/AiService.kt` | 2026-06-28 |
 | Medical first-aid corpus (TCCC/MARCH) | P2 | DONE | 93 chunks in `corpus/` | 2026-06-28 |
@@ -33,4 +35,3 @@
 | WSL env not set up | P1 (human) | Run `bash runtime/scripts/setup_wsl.sh` in interactive WSL |
 | QNN SDK not downloaded | P1 (human) | Qualcomm account → QNN 2.37.0 → `~/qnn/2.37.0/` |
 | Android app not built on hardware | Both | Open `android/` in Android Studio, run on S25 Ultra |
-| Gradle never run locally | P2 verify | `./gradlew test` in `android/` after Android Studio sync |

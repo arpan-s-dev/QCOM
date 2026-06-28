@@ -6,3 +6,4 @@
 2026-06-28 00:00 | setup | repo | Scaffold + agent tracking system created
 2026-06-28 01:30 | Cursor/P1 | runtime | P1.0a IN_PROGRESS: WSL setup scripts, env template, DeepLab gate pipeline
 2026-06-28 02:00 | Cursor | integrate | Extract P2 zip → android/, corpus/, scripts/, docs/; add Gradle wrapper; SETUP.md
+2026-06-28 03:59 | Copilot/P2 | android | Fix Gradle/Compose/resources, bundle first-aid corpus into assets, add startup CorpusLoader + tests, update README names

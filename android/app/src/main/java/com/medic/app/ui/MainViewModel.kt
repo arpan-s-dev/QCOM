@@ -8,6 +8,7 @@ import com.medic.app.ai.PromptTemplates
 import com.medic.app.ai.StubAiService
 import com.medic.app.ai.TriageOrchestrator
 import com.medic.app.ai.VoiceLoopManager
+import com.medic.app.data.CorpusLoader
 import com.medic.app.data.CorpusChunk
 import com.medic.app.nav.PositionSource
 import com.medic.app.nav.PositionState
@@ -57,8 +58,7 @@ data class AppUiState(
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val aiService: AiService = StubAiService()  // <-- swap to RealAiService() when ready
-    private val corpus: List<CorpusChunk> = emptyList()  // <-- populate from bundled corpus + vectors asset at startup
-    private val orchestrator = TriageOrchestrator(aiService, corpus)
+    private var corpus: List<CorpusChunk> = emptyList()
     private val voiceLoop = VoiceLoopManager(application)
 
     // Rough fallback location used only to seed the solar compass before a real
@@ -85,6 +85,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 )
             )
         )
+        viewModelScope.launch {
+            corpus = CorpusLoader.loadFirstAidCorpus(
+                assets = application.assets,
+                embedder = aiService::embed
+            )
+        }
         refreshSunPosition()
     }
 
@@ -108,6 +114,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.value = _uiState.value.copy(messages = _uiState.value.messages + userMsg)
 
         viewModelScope.launch {
+            val orchestrator = TriageOrchestrator(aiService, corpus)
             val result = orchestrator.handleQuery(text)
             val assistantMsg = ChatMessage(
                 id = UUID.randomUUID().toString(),
