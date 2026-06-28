@@ -91,6 +91,7 @@
 - Offline SF hospitals from bundled JSON
 - Spoof-detection logic and trust-state UI
 - Full app shell, RAG plumbing, and `AiService` abstraction
+- Field-instrument Compose UI (field-green / bone / signal-orange) with animated tab and status transitions *(landing on `demo/final`)*
 
 **Roadmap / only claim if landed before demo**
 - Snapdragon NPU-backed `RealAiService` for generation, embeddings, and ASR

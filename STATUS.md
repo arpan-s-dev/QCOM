@@ -1,6 +1,6 @@
 # STATUS.md — Live Dashboard
 
-> Updated 2026-06-28 (Cursor NPU agent). **Read HANDOFF.md for full context.**
+> Updated 2026-06-28 (SHIP agent). **Read HANDOFF.md for full context.**
 
 ## DE-RISK GATE
 **Stock `.pte` on NPU + QNN pinned?  [x] YES** (2026-06-28 — `dl3_qnn_q8.pte` ran on R3CXC07ZZWL, QNN backend, ~4.8ms inference)
@@ -46,7 +46,7 @@
 | Llama / Whisper / RealAiService | TODO | After gate |
 | Android app features | DONE (code) | star-nav, hospitals, field kit, triage |
 | Android build + corpus APK | DONE on `p2/integrate-lodestar-v1` | needs merge to demo/final |
-| UI polish / animations | TODO | Claude APP after merge |
+| UI polish / animations | IN_PROGRESS | APP-UI: field-green theme, tab transitions, mic pulse |
 | NPU metrics harness | TODO | If time |
 
 ---
@@ -56,8 +56,9 @@
 | Agent | Tool | Task | Status |
 |-------|------|------|--------|
 | NPU | Cursor | post-gate models + RealAiService | IN_PROGRESS |
-| APP | Claude | merge → demo/final + install | TODO |
-| SHIP | Claude | README + DEMO + pitch docs | DONE |
+| APP-BUILD | Copilot | merge → demo/final + install | TODO |
+| APP-UI | Copilot | Lodestar animations + theme | IN_PROGRESS |
+| SHIP | Cursor | README + DEMO + pitch + PR_BODY | DONE |
 | GIT | gh (Ranji) | PR merge | TODO |
 
 ---

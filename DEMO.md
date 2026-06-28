@@ -25,6 +25,7 @@
 ### 0:00-0:30 — Open with offline truth
 
 - Open Lodestar and point at the status strip first.
+- Optional one-liner if UI animations are visible: **"The whole shell is built for field use — high-contrast, offline-first, with trust state always on screen."**
 - Say: **"This phone is in airplane mode. No cloud calls, no map API, no Street View, and no internet requirement at runtime."**
 - If the position pill already shows `GPS_TRUSTED`, add: **"Even in airplane mode, we can still use device sensors and GPS when we trust it."**
 

@@ -12,3 +12,5 @@
 2026-06-28 12:00 | Cursor/P1 | runtime | fix_venv.sh, WSL adb via Windows, verify_env passed, QNN pinned
 2026-06-28 12:30 | Cursor | handoff | HANDOFF.md + AGENTS.md Cursor/Copilot/gh plan; STATUS master checklist
 2026-06-28 13:00 | Cursor | docs | COPILOT_AGENTS.md — per-agent prompts for GitHub Copilot CLI
+2026-06-28 14:00 | SHIP | docs | README team names, 5-min DEMO script, live-vs-roadmap pitch slide, PR_BODY.md, STATUS gate sync
+2026-06-28 14:15 | SHIP | docs | STATUS: APP-UI IN_PROGRESS; pitch/DEMO/PR note UI animations landing

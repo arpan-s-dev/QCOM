@@ -10,7 +10,8 @@
 - **ORIENT**: solar heading, night-sky photo heading, spoof-aware position trust states
 - **ORIENT**: nearest San Francisco hospitals from bundled offline JSON
 - **COMMUNICATE**: translation and SOS surfaces, with AI backend swappable through `AiService`
-- submission docs: README, DEMO script, pitch outline, and project status cleanup
+- submission docs: README, DEMO script, pitch outline, PR body, and project status cleanup
+- field-instrument UI polish with Compose motion *(merge from APP-UI branch when ready)*
 
 ## Demo truth
 
