@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIELDLINE COPILOT</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+  :root {
+    --bg-deep: #0D1410;
+    --bg-panel: #161F19;
+    --bg-panel-raised: #1D2A22;
+    --line: #2A382F;
+    --bone: #E8E4D8;
+    --bone-dim: #9CA396;
+    --signal: #FF6B35;
+    --safe: #3D8B5F;
+    --caution: #C9A646;
+    --critical: #D14B3C;
+    --mono: 'JetBrains Mono', monospace;
+    --display: 'Oswald', sans-serif;
+    --body: 'Inter', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-deep);
+    color: var(--bone);
+    font-family: var(--body);
+    min-height: 100vh;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  .app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-deep);
+    border-left: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+  }
+
+  /* ---- Status strip ---- */
+  .status-strip {
+    background: var(--bg-panel-raised);
+    border-bottom: 1px solid var(--line);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+  .status-dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: var(--safe);
+    box-shadow: 0 0 0 0 rgba(61,139,95,0.5);
+    animation: pulse 2s infinite;
+    flex-shrink: 0;
+  }
+  .status-dot.caution { background: var(--caution); animation-name: pulse-caution; }
+  .status-dot.critical { background: var(--critical); animation-name: pulse-critical; }
+  @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(61,139,95,0.5);} 70%{box-shadow:0 0 0 6px rgba(61,139,95,0);} 100%{box-shadow:0 0 0 0 rgba(61,139,95,0);} }
+  @keyframes pulse-caution { 0%{box-shadow:0 0 0 0 rgba(201,166,70,0.5);} 70%{box-shadow:0 0 0 6px rgba(201,166,70,0);} 100%{box-shadow:0 0 0 0 rgba(201,166,70,0);} }
+  @keyframes pulse-critical { 0%{box-shadow:0 0 0 0 rgba(209,75,60,0.5);} 70%{box-shadow:0 0 0 6px rgba(209,75,60,0);} 100%{box-shadow:0 0 0 0 rgba(209,75,60,0);} }
+
+  .status-text { font-family: var(--mono); font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--bone-dim); flex: 1; }
+  .status-text strong { color: var(--bone); font-weight: 700; }
+  .status-conf { font-family: var(--mono); font-size: 11px; color: var(--bone-dim); }
+
+  /* ---- Map panel ---- */
+  .map-panel {
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--line);
+    padding: 14px 16px;
+    position: sticky;
+    top: 41px;
+    z-index: 19;
+  }
+  .map-canvas-wrap {
+    position: relative;
+    width: 100%;
+    height: 150px;
+    background: var(--bg-deep);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .map-grid-line { position: absolute; background: rgba(255,255,255,0.04); }
+  .confidence-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1.5px dashed var(--signal);
+    transform: translate(-50%, -50%);
+    transition: all 0.6s ease;
+  }
+  .pin {
+    position: absolute;
+    width: 10px; height: 10px;
+    background: var(--signal);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.6s ease;
+    box-shadow: 0 0 8px rgba(255,107,53,0.6);
+  }
+  .pin::after {
+    content: '';
+    position: absolute;
+    top: -5px; left: -5px;
+    width: 20px; height: 20px;
+    border: 1px solid var(--signal);
+    border-radius: 50%;
+    opacity: 0.5;
+  }
+  .dr-trail {
+    position: absolute;
+    border-top: 1px dotted var(--bone-dim);
+    transform-origin: left center;
+  }
+  .map-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--bone-dim);
+  }
+
+  /* ---- Chat ---- */
+  .chat-area {
+    flex: 1;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+  }
+  .msg { display: flex; gap: 10px; max-width: 92%; }
+  .msg.bot { align-self: flex-start; }
+  .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+  .avatar {
+    width: 26px; height: 26px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+  }
+  .msg.bot .avatar { background: var(--signal); color: #1A0F0A; }
+  .msg.user .avatar { background: var(--bg-panel-raised); color: var(--bone-dim); border: 1px solid var(--line); }
+  .bubble {
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 11px 13px;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  .msg.user .bubble { background: var(--bg-panel-raised); }
+  .bubble p { margin-bottom: 6px; }
+  .bubble p:last-child { margin-bottom: 0; }
+
+  .choice-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .choice-btn {
+    font-family: var(--display);
+    font-size: 12px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    background: var(--bg-panel-raised);
+    color: var(--bone);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 9px 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .choice-btn:hover { border-color: var(--signal); color: var(--signal); }
+  .choice-btn:disabled { opacity: 0.35; cursor: default; }
+
+  .step-list { list-style: none; margin-top: 4px; }
+  .step-list li { padding: 6px 0 6px 22px; position: relative; font-size: 14px; line-height: 1.5; }
+  .step-list li::before { content: '▸'; position: absolute; left: 0; color: var(--signal); font-weight: 700; }
+
+  .severity-badge {
+    display: inline-block;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 3px; font-weight: 700; margin-bottom: 8px;
+  }
+  .severity-CRITICAL { background: rgba(209,75,60,0.18); color: var(--critical); border: 1px solid var(--critical); }
+  .severity-SERIOUS { background: rgba(201,166,70,0.18); color: var(--caution); border: 1px solid var(--caution); }
+  .severity-MODERATE { background: rgba(61,139,95,0.18); color: var(--safe); border: 1px solid var(--safe); }
+  .severity-MINOR { background: rgba(156,163,150,0.18); color: var(--bone-dim); border: 1px solid var(--bone-dim); }
+
+  .emergency-banner {
+    background: var(--critical); color: #1A0805;
+    font-family: var(--display); font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.03em; padding: 10px 13px; border-radius: 6px; margin-bottom: 8px; font-size: 12px;
+  }
+
+  /* ---- Camera card ---- */
+  .camera-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 8px;
+  }
+  .camera-viewport {
+    width: 100%;
+    aspect-ratio: 4/3;
+    background: #000;
+    border-radius: 5px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 10px;
+  }
+  .camera-viewport video, .camera-viewport canvas, .camera-viewport img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .scan-overlay {
+    position: absolute; inset: 0;
+    border: 2px solid var(--signal);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .scan-overlay.scanning {
+    opacity: 1;
+    animation: scanPulse 1.2s infinite;
+  }
+  @keyframes scanPulse { 0%,100%{ border-color: var(--signal); } 50%{ border-color: var(--caution); } }
+  .scan-line {
+    position: absolute; left: 0; right: 0; height: 2px;
+    background: var(--signal);
+    box-shadow: 0 0 8px var(--signal);
+    opacity: 0;
+  }
+  .scan-line.scanning { opacity: 1; animation: scanMove 1.2s linear infinite; }
+  @keyframes scanMove { 0%{ top: 0%; } 100%{ top: 100%; } }
+
+  .camera-status {
+    font-family: var(--mono); font-size: 11px; color: var(--bone-dim);
+    text-align: center; margin-bottom: 10px; min-height: 14px;
+  }
+  .camera-controls { display: flex; gap: 8px; }
+  .camera-controls button { flex: 1; }
+
+  button {
+    font-family: var(--display); font-size: 13px; letter-spacing: 0.03em; text-transform: uppercase;
+    background: var(--bg-panel-raised); color: var(--bone); border: 1px solid var(--line);
+    border-radius: 3px; padding: 11px 14px; cursor: pointer; transition: all 0.15s ease;
+  }
+  button:hover { border-color: var(--bone-dim); background: #243227; }
+  button:active { transform: scale(0.98); }
+  button.primary { background: var(--signal); color: #1A0F0A; border-color: var(--signal); font-weight: 600; }
+  button.primary:hover { background: #FF7E50; }
+  button:disabled { opacity: 0.35; cursor: default; }
+
+  .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .data-cell { background: var(--bg-deep); border: 1px solid var(--line); border-radius: 3px; padding: 8px 10px; }
+  .data-cell .label { font-family: var(--mono); font-size: 9px; color: var(--bone-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+  .data-cell .val { font-family: var(--mono); font-size: 14px; color: var(--bone); margin-top: 2px; }
+
+  /* ---- Input bar ---- */
+  .input-bar {
+    display: flex; gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--line);
+    background: var(--bg-panel-raised);
+  }
+  .input-bar input {
+    flex: 1;
+    background: var(--bg-deep);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    color: var(--bone);
+    font-family: var(--body);
+    font-size: 14px;
+    padding: 10px 16px;
+  }
+  .input-bar button {
+    border-radius: 50%;
+    width: 40px; height: 40px;
+    padding: 0;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .typing-dots { display: inline-flex; gap: 3px; padding: 4px 0; }
+  .typing-dots span {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--bone-dim);
+    animation: typingBounce 1.2s infinite;
+  }
+  .typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes typingBounce { 0%,60%,100%{ transform: translateY(0); opacity: 0.4; } 30%{ transform: translateY(-4px); opacity: 1; } }
+
+  .footer-note {
+    font-family: var(--mono); font-size: 9px; color: var(--bone-dim);
+    text-align: center; padding: 8px; line-height: 1.5; border-top: 1px solid var(--line);
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="status-strip">
+    <div class="status-dot" id="statusDot"></div>
+    <div class="status-text">POSITION: <strong id="statusTierText">DEMO DEFAULT</strong></div>
+    <div class="status-conf" id="statusConf">—</div>
+  </div>
+
+  <div class="map-panel">
+    <div class="map-canvas-wrap" id="mapCanvas">
+      <!-- pin, ring, trail injected by JS -->
+    </div>
+    <div class="map-meta">
+      <span id="mapCoords">37.3382, -121.8863</span>
+      <span id="mapMethod">SOURCE: GPS</span>
+    </div>
+  </div>
+
+  <div class="chat-area" id="chatArea"></div>
+
+  <div class="input-bar">
+    <input type="text" id="chatInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendUserText()">
+    <button class="primary" onclick="sendUserText()">→</button>
+  </div>
+
+  <div class="footer-note">
+    GEOLOCATION + HOSPITAL DATA: REAL, LIVE (NEEDS NETWORK) · VISION MODEL OUTPUTS: SIMULATED FOR THIS PROTOTYPE
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+const state = {
+  lat: 37.3382,
+  lon: -121.8863,
+  tier: 'GPS_TRUSTED',
+  confidence: 1.0,
+  drTrailPoints: [],
+  mode: null, // 'orient' | 'treat'
+  awaitingCamera: null, // 'star' | 'wound'
+  locationSource: 'DEFAULT', // 'DEFAULT' | 'GPS_REAL' | 'GPS_DENIED'
+  hospitalsLoaded: false,
+  hospitalsLoading: false,
+  hospitalsError: null
+};
+
+// Real hospital data, fetched live from OpenStreetMap's Overpass API
+// (amenity=hospital query, no API key required). Falls back to an empty
+// list with an honest error message if the network call fails or the
+// person has no connectivity - this app does NOT silently substitute
+// fake coordinates if the real fetch fails.
+let hospitals = [];
+
+async function fetchRealHospitals(lat, lon, radiusMeters = 20000) {
+  state.hospitalsLoading = true;
+  const query = `[out:json][timeout:20];(node["amenity"="hospital"](around:${radiusMeters},${lat},${lon});way["amenity"="hospital"](around:${radiusMeters},${lat},${lon}););out center 30;`;
+  const url = 'https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(query);
+
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    const results = (data.elements || []).map(el => {
+      const elLat = el.lat || (el.center && el.center.lat);
+      const elLon = el.lon || (el.center && el.center.lon);
+      const name = (el.tags && el.tags.name) || 'Unnamed hospital facility';
+      if (elLat == null || elLon == null) return null;
+      return { name, lat: elLat, lon: elLon };
+    }).filter(Boolean);
+
+    state.hospitalsLoading = false;
+    state.hospitalsLoaded = true;
+    state.hospitalsError = null;
+    hospitals = results;
+    return results;
+  } catch (err) {
+    state.hospitalsLoading = false;
+    state.hospitalsLoaded = false;
+    state.hospitalsError = err.message || 'network error';
+    hospitals = [];
+    return [];
+  }
+}
+
+// Real browser geolocation - returns a Promise. No fake fallback coordinates;
+// if denied or unavailable, the caller must handle that explicitly.
+function getRealLocation() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('Geolocation not supported in this browser'));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude, accuracy: pos.coords.accuracy }),
+      (err) => reject(err),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  });
+}
+
+// ============================================================
+// CHAT RENDERING
+// ============================================================
+const chatArea = document.getElementById('chatArea');
+
+function scrollToBottom() {
+  requestAnimationFrame(() => { chatArea.scrollTop = chatArea.scrollHeight; });
+}
+
+function addBotMessage(html, opts = {}) {
+  const msg = document.createElement('div');
+  msg.className = 'msg bot';
+  msg.innerHTML = `<div class="avatar">FL</div><div class="bubble">${html}</div>`;
+  chatArea.appendChild(msg);
+  scrollToBottom();
+  return msg;
+}
+
+function addUserMessage(text) {
+  const msg = document.createElement('div');
+  msg.className = 'msg user';
+  msg.innerHTML = `<div class="avatar">YOU</div><div class="bubble">${escapeHtml(text)}</div>`;
+  chatArea.appendChild(msg);
+  scrollToBottom();
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function addTypingIndicator() {
+  const msg = document.createElement('div');
+  msg.className = 'msg bot';
+  msg.id = 'typingIndicator';
+  msg.innerHTML = `<div class="avatar">FL</div><div class="bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
+  chatArea.appendChild(msg);
+  scrollToBottom();
+}
+function removeTypingIndicator() {
+  const el = document.getElementById('typingIndicator');
+  if (el) el.remove();
+}
+
+function botRespond(html, delay = 600) {
+  addTypingIndicator();
+  return new Promise(resolve => {
+    setTimeout(() => {
+      removeTypingIndicator();
+      const m = addBotMessage(html);
+      resolve(m);
+    }, delay);
+  });
+}
+
+function addChoices(container, choices) {
+  const row = document.createElement('div');
+  row.className = 'choice-row';
+  choices.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = c.label;
+    btn.onclick = () => {
+      row.querySelectorAll('button').forEach(b => b.disabled = true);
+      addUserMessage(c.label);
+      c.action();
+    };
+    row.appendChild(btn);
+  });
+  container.querySelector('.bubble').appendChild(row);
+  scrollToBottom();
+}
+
+// ============================================================
+// STATUS STRIP + MAP
+// ============================================================
+function setStatus(tier, confidence, dotClass) {
+  document.getElementById('statusTierText').textContent = tier;
+  document.getElementById('statusConf').textContent = Math.round(confidence) + '%';
+  document.getElementById('statusDot').className = 'status-dot' + (dotClass ? ' ' + dotClass : '');
+}
+
+function updateMap(lat, lon, confidenceRadiusPx, source, addTrailPoint) {
+  document.getElementById('mapCoords').textContent = lat.toFixed(4) + ', ' + lon.toFixed(4);
+  document.getElementById('mapMethod').textContent = 'SOURCE: ' + source;
+
+  const wrap = document.getElementById('mapCanvas');
+  wrap.innerHTML = '';
+
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  const cx = w / 2, cy = h / 2;
+
+  // grid lines for texture
+  for (let i = 1; i < 4; i++) {
+    const v = document.createElement('div');
+    v.className = 'map-grid-line';
+    v.style.left = (w * i / 4) + 'px'; v.style.top = '0'; v.style.width = '1px'; v.style.height = h + 'px';
+    wrap.appendChild(v);
+  }
+  for (let i = 1; i < 3; i++) {
+    const hl = document.createElement('div');
+    hl.className = 'map-grid-line';
+    hl.style.top = (h * i / 3) + 'px'; hl.style.left = '0'; hl.style.height = '1px'; hl.style.width = w + 'px';
+    wrap.appendChild(hl);
+  }
+
+  if (addTrailPoint) state.drTrailPoints.push({ x: cx, y: cy });
+  if (state.drTrailPoints.length > 6) state.drTrailPoints.shift();
+
+  // dead reckoning trail (dotted line from previous points)
+  state.drTrailPoints.forEach((p, i) => {
+    if (i === 0) return;
+    const prev = state.drTrailPoints[i-1];
+    const dx = p.x - prev.x, dy = p.y - prev.y;
+    const len = Math.sqrt(dx*dx + dy*dy);
+    const angle = Math.atan2(dy, dx) * 180/Math.PI;
+    const trail = document.createElement('div');
+    trail.className = 'dr-trail';
+    trail.style.left = prev.x + 'px'; trail.style.top = prev.y + 'px';
+    trail.style.width = len + 'px';
+    trail.style.transform = `rotate(${angle}deg)`;
+    wrap.appendChild(trail);
+  });
+
+  // confidence ring
+  const ring = document.createElement('div');
+  ring.className = 'confidence-ring';
+  ring.style.left = cx + 'px'; ring.style.top = cy + 'px';
+  ring.style.width = confidenceRadiusPx*2 + 'px'; ring.style.height = confidenceRadiusPx*2 + 'px';
+  wrap.appendChild(ring);
+
+  // pin
+  const pin = document.createElement('div');
+  pin.className = 'pin';
+  pin.style.left = cx + 'px'; pin.style.top = cy + 'px';
+  wrap.appendChild(pin);
+}
+
+updateMap(state.lat, state.lon, 14, 'DEMO DEFAULT', true);
+document.getElementById('statusDot').className = 'status-dot caution';
+
+// ============================================================
+// SUN / CELESTIAL MATH (ported, unchanged)
+// ============================================================
+function sunPosition(lat, lon, date) {
+  const dayOfYear = Math.floor((date - new Date(date.getFullYear(),0,0)) / 86400000);
+  const hourDecimal = date.getUTCHours() + date.getUTCMinutes()/60 + date.getUTCSeconds()/3600;
+  const gamma = 2*Math.PI/365 * (dayOfYear - 1 + (hourDecimal-12)/24);
+  const eqTime = 229.18*(0.000075 + 0.001868*Math.cos(gamma) - 0.032077*Math.sin(gamma) - 0.014615*Math.cos(2*gamma) - 0.040849*Math.sin(2*gamma));
+  const decl = 0.006918 - 0.399912*Math.cos(gamma) + 0.070257*Math.sin(gamma) - 0.006758*Math.cos(2*gamma) + 0.000907*Math.sin(2*gamma) - 0.002697*Math.cos(3*gamma) + 0.00148*Math.sin(3*gamma);
+  const timeOffset = eqTime + 4*lon;
+  const trueSolarTime = (hourDecimal*60 + timeOffset) % 1440;
+  const hourAngleDeg = (trueSolarTime/4) - 180;
+  const hourAngle = hourAngleDeg * Math.PI/180;
+  const latRad = lat * Math.PI/180;
+  let cosZenith = Math.sin(latRad)*Math.sin(decl) + Math.cos(latRad)*Math.cos(decl)*Math.cos(hourAngle);
+  cosZenith = Math.max(-1, Math.min(1, cosZenith));
+  const zenith = Math.acos(cosZenith);
+  const elevation = 90 - zenith*180/Math.PI;
+  let cosAz = (Math.sin(decl) - Math.sin(latRad)*cosZenith) / (Math.cos(latRad)*Math.sin(zenith));
+  cosAz = Math.max(-1, Math.min(1, cosAz));
+  let azimuth = Math.acos(cosAz)*180/Math.PI;
+  if (hourAngleDeg > 0) azimuth = 360 - azimuth;
+  return { azimuth, elevation };
+}
+function bearingToCompass(deg) {
+  const dirs = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+  return dirs[Math.round((deg % 360) / 22.5) % 16];
+}
+function haversineMeters(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const dLat = (lat2-lat1) * Math.PI/180, dLon = (lon2-lon1) * Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+function bearingTo(lat1, lon1, lat2, lon2) {
+  const lat1r = lat1*Math.PI/180, lat2r = lat2*Math.PI/180;
+  const dLon = (lon2-lon1)*Math.PI/180;
+  const y = Math.sin(dLon)*Math.cos(lat2r);
+  const x = Math.cos(lat1r)*Math.sin(lat2r) - Math.sin(lat1r)*Math.cos(lat2r)*Math.cos(dLon);
+  let b = Math.atan2(y,x)*180/Math.PI;
+  return b < 0 ? b + 360 : b;
+}
+function isNight() {
+  const { elevation } = sunPosition(state.lat, state.lon, new Date());
+  return elevation <= 0;
+}
+
+// ============================================================
+// MEDICAL TRIAGE (ported, unchanged) + bug-fixed negation handling
+// ============================================================
+function classifyWound(text) {
+  const lower = text.toLowerCase();
+  let woundType = 'UNKNOWN';
+  if (lower.includes('spurt') || lower.includes('pulsing') || lower.includes('artery')) woundType = 'ARTERIAL_BLEED';
+  else if (lower.includes('burn') || lower.includes('fire') || lower.includes('scald')) woundType = 'BURN';
+  else if (lower.includes('broke') || lower.includes('fracture') || lower.includes('bone') || lower.includes('deformity')) woundType = 'FRACTURE';
+  else if (lower.includes('explosion') || lower.includes('blast') || lower.includes('shrapnel')) woundType = 'BLAST_INJURY';
+  else if (lower.includes('cut') || lower.includes('laceration') || lower.includes('sliced')) woundType = 'LACERATION';
+  else if (lower.includes('bleed')) woundType = 'VENOUS_BLEED';
+  return {
+    woundType,
+    bleedingSpurting: lower.includes('spurt') || lower.includes('pulsing'),
+    bleedingControlled: (lower.includes('stopped') || lower.includes('controlled')) && !lower.includes("hasn't stopped") && !lower.includes('has not stopped') && !lower.includes("won't stop") && !lower.includes('not stopped'),
+    patientBreathing: !lower.includes('not breathing'),
+    limbDeformity: lower.includes('deformity') || lower.includes('visibly broken'),
+    penetratingObject: lower.includes('shrapnel') || lower.includes('embedded') || lower.includes('stuck in'),
+    burnDegree: lower.includes('3rd degree') || lower.includes('third degree') ? 3 : (lower.includes('2nd degree') || lower.includes('second degree') ? 2 : 1),
+    burnSizePercent: lower.includes('large') || lower.includes('25%') ? 25 : 5
+  };
+}
+
+function triage(input) {
+  if (!input.patientBreathing) {
+    return { severity: 'CRITICAL', steps: ['Check airway for obstruction — tilt head back, lift chin.', 'If no breathing after airway is clear, begin CPR if trained.', 'This is life-threatening — get to a hospital immediately.'], emergency: true };
+  }
+  switch (input.woundType) {
+    case 'ARTERIAL_BLEED':
+      if (input.bleedingSpurting && !input.bleedingControlled) {
+        return { severity: 'CRITICAL', steps: ['ARTERIAL BLEED — act immediately, this can be fatal in minutes.', 'Apply firm direct pressure DIRECTLY on the wound with both hands.', "If on a limb and bleeding doesn't stop: apply a tourniquet 2–3 inches above the wound (never on a joint).", 'Tighten tourniquet until bleeding stops completely. Note the time applied.', 'Do NOT remove the tourniquet — that is for hospital staff only.', 'Get to nearest hospital immediately.'], emergency: true };
+      }
+      return { severity: 'SERIOUS', steps: ['Apply firm direct pressure on the wound.', 'Elevate the limb above heart level if possible.', 'Monitor closely — escalate to tourniquet if bleeding becomes spurting.', 'Get to a hospital as soon as possible.'], emergency: true };
+    case 'VENOUS_BLEED':
+      return { severity: input.bleedingControlled ? 'MODERATE' : 'SERIOUS', steps: ['Apply firm direct pressure with clean cloth or dressing.', 'Hold pressure continuously for 5–10 minutes without checking.', 'Once bleeding slows, bandage firmly but not so tight it cuts circulation.', 'Seek medical attention for possible stitches.'], emergency: false };
+    case 'BURN': {
+      const critical = input.burnDegree >= 3 || input.burnSizePercent > 20;
+      const serious = input.burnDegree === 2 && input.burnSizePercent > 5;
+      const steps = ['Cool the burn with clean, cool (not ice-cold) water for 10–20 minutes.', 'Do NOT apply ice, butter, oil, or home remedies.', 'Remove tight clothing/jewelry near the burn before swelling starts.', 'Cover loosely with a clean, non-stick cloth — do not pop blisters.'];
+      if (critical) { steps.unshift('SEVERE BURN — this needs hospital treatment, do not delay.'); return { severity: 'CRITICAL', steps, emergency: true }; }
+      if (serious) { steps.push('This size/depth of burn needs medical evaluation today.'); return { severity: 'SERIOUS', steps, emergency: true }; }
+      steps.push('Minor burns usually heal on their own — watch for infection signs.');
+      return { severity: 'MINOR', steps, emergency: false };
+    }
+    case 'FRACTURE': {
+      const fSteps = ['Do not try to realign or straighten the limb.', 'Immobilize using a splint (rigid material + padding) above and below the injury.', 'Apply ice wrapped in cloth, 15–20 min at a time.'];
+      if (input.limbDeformity) { fSteps.unshift('Visible deformity present — likely needs hospital imaging and setting.'); return { severity: 'SERIOUS', steps: fSteps, emergency: true }; }
+      fSteps.push('Get an X-ray when possible.');
+      return { severity: 'MODERATE', steps: fSteps, emergency: false };
+    }
+    case 'BLAST_INJURY': {
+      const bSteps = ['Blast injuries can cause serious internal damage even without visible wounds.', 'Treat any visible bleeding first per standard wound protocol.', 'Watch for: difficulty breathing, chest/abdominal pain, confusion, ringing in ears, vision changes.', 'Any of those signs = treat as critical, get to hospital immediately.', 'Even with no symptoms, seek evaluation within hours, not days.'];
+      if (input.penetratingObject) { bSteps.unshift('Penetrating fragment present — do NOT remove it. Stabilize in place.'); return { severity: 'CRITICAL', steps: bSteps, emergency: true }; }
+      return { severity: 'SERIOUS', steps: bSteps, emergency: true };
+    }
+    case 'LACERATION':
+      return { severity: 'MODERATE', steps: ['Clean the wound gently with clean water if available.', 'Apply direct pressure with clean cloth until bleeding stops.', 'Close larger gaps with butterfly closures/medical tape if no suturing available.', 'Cover with clean dressing, change daily.', 'Watch for infection signs.'], emergency: false };
+    default:
+      return { severity: 'SERIOUS', steps: ['Unable to classify wound type automatically.', 'Apply direct pressure with clean cloth to any bleeding.', 'Keep patient still and warm.', 'Seek medical attention as soon as possible.'], emergency: false };
+  }
+}
+
+function findNearestHospital(lat, lon) {
+  if (!hospitals.length) return null;
+  let nearest = null, minDist = Infinity;
+  hospitals.forEach(h => {
+    const d = haversineMeters(lat, lon, h.lat, h.lon);
+    if (d < minDist) { minDist = d; nearest = h; }
+  });
+  const bearing = bearingTo(lat, lon, nearest.lat, nearest.lon);
+  return { hospital: nearest, distanceKm: minDist/1000, bearing };
+}
+
+function getHospitalStatusMessage() {
+  if (state.hospitalsLoading) return 'Looking up nearby hospitals from OpenStreetMap...';
+  if (state.hospitalsError) return `Couldn't reach hospital lookup (${state.hospitalsError}). No network, or the lookup service is down — try again once connectivity returns.`;
+  if (state.hospitalsLoaded && hospitals.length === 0) return 'No hospitals found in OpenStreetMap data within range of this location.';
+  if (!state.hospitalsLoaded) return 'Hospital data not loaded yet for this location.';
+  return null;
+}
+
+// ============================================================
+// CONVERSATION FLOW
+// ============================================================
+function renderSteps(severity, steps, emergency) {
+  let html = '';
+  if (emergency) html += `<div class="emergency-banner">⚠ ${severity} — SEEK CARE NOW</div>`;
+  html += `<span class="severity-badge severity-${severity}">${severity}</span><ul class="step-list">${steps.map(s => `<li>${s}</li>`).join('')}</ul>`;
+  return html;
+}
+
+async function startConversation() {
+  const m1 = await botRespond(`<p>Fieldline copilot online.</p><p>Currently on demo default coordinates. Want to use your real device location and pull real nearby hospitals?</p>`, 300);
+  addChoices(m1, [
+    { label: 'Use my real GPS location', action: startOrientFlow },
+    { label: 'Treat an injury instead', action: startTreatFlow }
+  ]);
+}
+
+// ---------------- ORIENT FLOW ----------------
+async function startOrientFlow() {
+  state.mode = 'orient';
+  await botRespond(`<p>Requesting real GPS fix from this device...</p>`, 400);
+
+  try {
+    const pos = await getRealLocation();
+    state.lat = pos.lat;
+    state.lon = pos.lon;
+    state.locationSource = 'GPS_REAL';
+    updateMap(state.lat, state.lon, 14, 'GPS', true);
+
+    await botRespond(`<p>Real GPS fix acquired: <strong>${pos.lat.toFixed(5)}, ${pos.lon.toFixed(5)}</strong> (±${Math.round(pos.accuracy)}m accuracy reported by device).</p><p>Looking up real nearby hospitals from OpenStreetMap...</p>`, 500);
+
+    await fetchRealHospitals(state.lat, state.lon);
+
+    if (state.hospitalsError) {
+      await botRespond(`<p>Couldn't reach hospital lookup (${state.hospitalsError}). This needs internet connectivity — if you're offline, this step will fail until connectivity returns.</p>`, 400);
+    } else if (hospitals.length === 0) {
+      await botRespond(`<p>No hospitals found in OpenStreetMap within 20km of this position.</p>`, 400);
+    } else {
+      const nearest = findNearestHospital(state.lat, state.lon);
+      await botRespond(`<p>Found ${hospitals.length} hospital${hospitals.length===1?'':'s'} nearby. Closest: <strong>${escapeHtml(nearest.hospital.name)}</strong> — ${nearest.distanceKm.toFixed(1)} km ${bearingToCompass(nearest.bearing)}.</p>`, 400);
+    }
+  } catch (err) {
+    state.locationSource = 'GPS_DENIED';
+    await botRespond(`<p>Couldn't get a real GPS fix (${err.message || 'permission denied or unavailable'}). Staying on the default demo coordinates for now — you can retry from this screen.</p>`, 500).then(m => {
+      addChoices(m, [
+        { label: 'Retry GPS request', action: startOrientFlow },
+        { label: 'Continue with demo coordinates', action: continueOrientAfterLocation }
+      ]);
+    });
+    return;
+  }
+
+  await continueOrientAfterLocation();
+}
+
+async function continueOrientAfterLocation() {
+  await botRespond(`<p>Want to simulate a GPS spoof/jam event to see the fallback chain?</p>`, 500).then(m => {
+    addChoices(m, [
+      { label: 'Simulate spoof attack', action: simulateSpoof },
+      { label: 'No, I\'m good', action: () => botRespond('<p>Understood. Position pin stays live on GPS. Ask me anything else.</p>') }
+    ]);
+  });
+}
+
+async function simulateSpoof() {
+  await botRespond(`<p>⚠ Injecting spoofed GPS fix — simulating a 15km instantaneous jump...</p>`, 600);
+  setStatus('GPS SUSPICIOUS', 50, 'caution');
+  await new Promise(r => setTimeout(r, 700));
+  setStatus('SPOOF DETECTED', 30, 'critical');
+  updateMap(state.lat, state.lon, 30, 'DEAD RECKONING', true);
+  const m = await botRespond(`<p><strong>SPOOF DETECTED.</strong> GPS jump exceeded physically plausible motion. Fix rejected.</p><p>Holding last trusted position. Tracking via motion sensors (dead reckoning) — confidence will decay over time.</p>`, 700);
+
+  // Simulate drift decay
+  let drift = 0;
+  const driftInterval = setInterval(() => {
+    drift += 1;
+    const conf = Math.max(15, 30 - drift * 3);
+    setStatus('DEAD RECKONING', conf, 'caution');
+    updateMap(state.lat + drift*0.0003, state.lon + drift*0.0002, 30 + drift*4, 'DEAD RECKONING', true);
+    if (drift >= 4) {
+      clearInterval(driftInterval);
+      offerCelestialFix();
+    }
+  }, 900);
+}
+
+async function offerCelestialFix() {
+  const night = isNight();
+  const m = await botRespond(`<p>Motion-sensor confidence is getting low. Time to re-anchor with a celestial fix.</p><p>It's currently <strong>${night ? 'night' : 'day'}</strong> at this location — I'll use the ${night ? 'star' : 'sun-shadow'} method.</p>`, 700);
+  addChoices(m, [
+    { label: night ? 'Open camera — sight Polaris' : 'Open camera — shadow reading', action: () => openCamera('star') },
+    { label: 'Skip for now', action: () => botRespond('<p>Okay — staying on dead-reckoning. Confidence will keep degrading until you take a fix.</p>') }
+  ]);
+}
+
+// ---------------- TREAT FLOW ----------------
+async function startTreatFlow() {
+  state.mode = 'treat';
+  const m = await botRespond(`<p>I can assess a wound two ways:</p>`, 400);
+  addChoices(m, [
+    { label: 'Show me a photo (camera)', action: () => openCamera('wound') },
+    { label: 'Describe it in words', action: () => botRespond('<p>Go ahead — describe what you see (bleeding type, color, location, depth) in the message box below.</p>') }
+  ]);
+}
+
+// ============================================================
+// CAMERA HANDLING — real camera capture, simulated inference
+// ============================================================
+async function openCamera(kind) {
+  state.awaitingCamera = kind;
+  const isWound = kind === 'wound';
+
+  const card = document.createElement('div');
+  card.className = 'msg bot';
+  card.innerHTML = `
+    <div class="avatar">FL</div>
+    <div class="bubble">
+      <p>${isWound ? 'Point the camera at the wound and capture a frame.' : 'Point the camera toward the sky reference point and capture.'}</p>
+      <div class="camera-card">
+        <div class="camera-viewport" id="cameraViewport-${Date.now()}">
+          <video autoplay playsinline muted style="display:none;"></video>
+          <canvas style="display:none;"></canvas>
+          <div class="scan-overlay"></div>
+          <div class="scan-line"></div>
+        </div>
+        <div class="camera-status"></div>
+        <div class="camera-controls">
+          <button class="capture-btn">CAPTURE</button>
+          <button class="cancel-btn">CANCEL</button>
+        </div>
+      </div>
+    </div>`;
+  chatArea.appendChild(card);
+  scrollToBottom();
+
+  const viewport = card.querySelector('.camera-viewport');
+  const video = card.querySelector('video');
+  const canvas = card.querySelector('canvas');
+  const statusEl = card.querySelector('.camera-status');
+  const captureBtn = card.querySelector('.capture-btn');
+  const cancelBtn = card.querySelector('.cancel-btn');
+
+  let stream = null;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: isWound ? 'environment' : 'environment' } });
+    video.srcObject = stream;
+    video.style.display = 'block';
+    statusEl.textContent = 'Camera live — frame the subject and capture';
+  } catch (err) {
+    statusEl.textContent = 'Camera unavailable (' + err.name + ') — using placeholder frame';
+    canvas.style.display = 'block';
+    canvas.width = 320; canvas.height = 240;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#1a2620';
+    ctx.fillRect(0,0,320,240);
+    ctx.fillStyle = '#9CA396';
+    ctx.font = '12px monospace';
+    ctx.fillText('NO CAMERA SIGNAL', 90, 120);
+  }
+
+  function cleanup() {
+    if (stream) stream.getTracks().forEach(t => t.stop());
+  }
+
+  cancelBtn.onclick = () => {
+    cleanup();
+    captureBtn.disabled = true;
+    cancelBtn.disabled = true;
+    statusEl.textContent = 'Cancelled.';
+    botRespond('<p>No problem — let me know if you want to try again.</p>');
+  };
+
+  captureBtn.onclick = async () => {
+    captureBtn.disabled = true;
+    cancelBtn.disabled = true;
+
+    // Freeze frame
+    if (video.style.display !== 'none') {
+      canvas.width = video.videoWidth || 320;
+      canvas.height = video.videoHeight || 240;
+      canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+      video.style.display = 'none';
+      canvas.style.display = 'block';
+    }
+    cleanup();
+
+    const overlay = card.querySelector('.scan-overlay');
+    const scanLine = card.querySelector('.scan-line');
+    overlay.classList.add('scanning');
+    scanLine.classList.add('scanning');
+
+    statusEl.textContent = isWound
+      ? 'Running on-device vision model (simulated)...'
+      : 'Running NPU star-point detector (simulated)...';
+
+    await new Promise(r => setTimeout(r, 1800));
+
+    overlay.classList.remove('scanning');
+    scanLine.classList.remove('scanning');
+    statusEl.textContent = 'Analysis complete.';
+
+    if (isWound) {
+      handleWoundAnalysis();
+    } else {
+      handleStarAnalysis();
+    }
+  };
+}
+
+function handleStarAnalysis() {
+  // SIMULATED inference output — in production this would come from the NPU
+  // star-point detector + geometric solve against a star catalog.
+  const simulatedAzimuth = 8 + Math.random() * 10; // near-north, small jitter
+  const simulatedElevation = 35 + Math.random() * 6; // plausible mid-latitude
+  const simConfidence = 0.78;
+
+  botRespond(`
+    <p><strong>Celestial fix acquired</strong> (simulated NPU output for this prototype):</p>
+    <div class="data-grid">
+      <div class="data-cell"><div class="label">Heading ref</div><div class="val">${bearingToCompass(simulatedAzimuth)} ${simulatedAzimuth.toFixed(0)}°</div></div>
+      <div class="data-cell"><div class="label">Est. latitude</div><div class="val">${simulatedElevation.toFixed(1)}°N</div></div>
+      <div class="data-cell"><div class="label">Model conf.</div><div class="val">${(simConfidence*100).toFixed(0)}%</div></div>
+      <div class="data-cell"><div class="label">Method</div><div class="val" style="font-size:11px;">Polaris geom.</div></div>
+    </div>
+    <p style="margin-top:8px;">Re-anchoring position from this fix.</p>
+  `, 200);
+
+  setStatus('CELESTIAL FIX', simConfidence*100, 'caution');
+  updateMap(state.lat, state.lon, 22, 'CELESTIAL', true);
+}
+
+function renderHospitalLine() {
+  const nearest = findNearestHospital(state.lat, state.lon);
+  if (nearest) {
+    return `<p style="margin-top:10px;">Nearest care: <strong>${escapeHtml(nearest.hospital.name)}</strong> — ${nearest.distanceKm.toFixed(1)} km ${bearingToCompass(nearest.bearing)}</p>`;
+  }
+  const msg = getHospitalStatusMessage();
+  return `<p style="margin-top:10px;font-size:13px;color:var(--bone-dim);">${msg || 'Hospital data unavailable.'}</p>`;
+}
+
+function handleWoundAnalysis() {
+  // SIMULATED inference output — production version would run a real
+  // wound/skin severity vision model on-device and output a structured
+  // classification, which then feeds the SAME deterministic triage engine
+  // used in the text-description path below.
+  const simulatedFindings = [
+    { type: 'LACERATION', confidence: 0.81, note: 'moderate depth, edges visible' },
+    { type: 'ARTERIAL_BLEED', confidence: 0.74, note: 'active bleeding pattern detected' },
+    { type: 'BURN', confidence: 0.86, note: 'second-degree pattern, blistering' }
+  ];
+  const finding = simulatedFindings[Math.floor(Math.random() * simulatedFindings.length)];
+
+  const input = classifyWound(finding.type === 'ARTERIAL_BLEED' ? 'spurting blood not stopped' :
+                                finding.type === 'BURN' ? '2nd degree burn moderate area' : 'cut laceration moderate');
+  const result = triage(input);
+
+  botRespond(`
+    <p><strong>Vision model output</strong> (simulated for this prototype):</p>
+    <div class="data-grid">
+      <div class="data-cell"><div class="label">Classification</div><div class="val" style="font-size:12px;">${finding.type.replace('_',' ')}</div></div>
+      <div class="data-cell"><div class="label">Model conf.</div><div class="val">${(finding.confidence*100).toFixed(0)}%</div></div>
+    </div>
+    <p style="margin-top:8px;font-size:13px;color:var(--bone-dim);">${finding.note}</p>
+    <p style="margin-top:8px;">Deterministic triage engine result (not the vision model's call):</p>
+    ${renderSteps(result.severity, result.steps, result.emergency)}
+    ${renderHospitalLine()}
+  `, 200);
+
+  if (result.severity === 'CRITICAL') setStatus('MEDICAL — CRITICAL', 100, 'critical');
+}
+
+// ============================================================
+// FREE-TEXT INPUT (treat-by-description path)
+// ============================================================
+function sendUserText() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  addUserMessage(text);
+  input.value = '';
+
+  // If we're in treat mode (or no mode set), run it through triage
+  const lower = text.toLowerCase();
+  const looksLikeInjury = /blood|bleed|burn|cut|wound|broke|fracture|shrapnel|blast|breathing/.test(lower);
+
+  if (looksLikeInjury || state.mode === 'treat') {
+    const parsed = classifyWound(text);
+    const result = triage(parsed);
+    botRespond(`
+      <p>Reading that as: <strong>${parsed.woundType.replace('_',' ')}</strong></p>
+      ${renderSteps(result.severity, result.steps, result.emergency)}
+      ${renderHospitalLine()}
+    `, 500);
+    if (result.severity === 'CRITICAL') setStatus('MEDICAL — CRITICAL', 100, 'critical');
+  } else {
+    botRespond(`<p>I can help with finding your position or treating an injury. Which do you need?</p>`, 500).then(m => {
+      addChoices(m, [
+        { label: 'Find my position', action: startOrientFlow },
+        { label: 'Treat an injury', action: startTreatFlow }
+      ]);
+    });
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+startConversation();
+</script>
+
+</body>
+</html>
