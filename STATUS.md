@@ -44,9 +44,9 @@
 |-----------|--------|-------|
 | QNN env + NPU gate | DONE | DeepLab gate passed on device; QNN backend confirmed |
 | Llama / Whisper / RealAiService | TODO | After gate |
-| Android app features | DONE (code) | star-nav, hospitals, field kit, triage |
+| Android app features | DONE (code) | star-nav, hospitals, field kit, triage, and demo GPS-spoof fallback control |
 | Android build + corpus APK | DONE on `p2/integrate-lodestar-v1` | needs merge to demo/final |
-| UI polish / animations | IN_PROGRESS | APP-UI: field-green theme, tab transitions, mic pulse |
+| UI polish / animations | IN_PROGRESS | APP-UI: field-green theme, tab transitions, mic pulse, ORIENT spoof demo UX |
 | NPU metrics harness | TODO | If time |
 
 ---

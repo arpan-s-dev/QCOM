@@ -130,6 +130,7 @@ class MainActivity : ComponentActivity() {
                             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                         )
                     },
+                    onSetSpoof = viewModel::setSpoofDemo,
                     onMedicTextChange = viewModel::onMedicTextChange,
                     onTranslate = { viewModel.onTranslate() }
                 )

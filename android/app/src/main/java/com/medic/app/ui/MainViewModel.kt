@@ -256,6 +256,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
+     * Demo control: simulate a spoofed GPS signal so the ORIENT screen can show
+     * the dead-reckoning fallback path without needing external mock tooling.
+     */
+    fun setSpoofDemo(spoofed: Boolean) {
+        updatePositionState(gpsAvailable = true, gpsSpoofed = spoofed)
+    }
+
+    /**
      * User added a wound photo. Loads + downscales the image and attaches a
      * reference infection-check. The on-device vision model isn't wired yet, so
      * the assessment is an honest guided checklist, never a diagnosis.

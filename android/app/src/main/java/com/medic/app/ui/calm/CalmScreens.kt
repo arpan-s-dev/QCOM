@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import com.medic.app.data.FieldKitItem
 import com.medic.app.data.GeoMath
 import com.medic.app.data.HospitalWithBearing
+import com.medic.app.nav.PositionSource
 import com.medic.app.ui.AppUiState
 import com.medic.app.ui.components.ChatMessage
 import com.medic.app.ui.components.CompassRing
@@ -233,9 +234,11 @@ fun FindNorthScreen(
     onOrientNavModeChange: (OrientNavMode) -> Unit,
     onUseMyLocation: () -> Unit,
     onSightSun: () -> Unit,
-    onPickNightSkyImage: () -> Unit
+    onPickNightSkyImage: () -> Unit,
+    onSetSpoof: (Boolean) -> Unit
 ) {
     val night = state.orientNavMode == OrientNavMode.NIGHT_SKY
+    val spoofed = state.positionState.spoofDetected
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -243,6 +246,13 @@ fun FindNorthScreen(
             .padding(14.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        PositionSourceChip(state)
+        if (spoofed) {
+            Spacer(Modifier.height(10.dp))
+            SpoofBanner()
+        }
+        Spacer(Modifier.height(12.dp))
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -333,6 +343,77 @@ fun FindNorthScreen(
             "Auto-detects day or night. Toggle is here for the demo.",
             color = SgTextMuted, fontSize = 12.sp, textAlign = TextAlign.Center
         )
+        Spacer(Modifier.height(18.dp))
+        DemoSpoofControl(spoofed = spoofed, onSetSpoof = onSetSpoof)
+        Spacer(Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun PositionSourceChip(state: AppUiState) {
+    val (label, bg, fg) = when {
+        state.positionState.spoofDetected ->
+            Triple("GPS spoofed · dead reckoning", SgMedical.tile, SgMedical.icon)
+        state.positionState.source == PositionSource.GPS_TRUSTED ->
+            Triple("GPS trusted", SgHospital.tile, SgHospital.icon)
+        state.positionState.source == PositionSource.DEAD_RECKONING ->
+            Triple("Dead reckoning", SgFindNorth.tile, SgFindNorth.icon)
+        else ->
+            Triple("Celestial fix only", SgFindNorth.tile, SgFindNorth.icon)
+    }
+    Row(modifier = Modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(20.dp))
+                .background(bg)
+                .padding(horizontal = 12.dp, vertical = 6.dp)
+        ) {
+            Text(label, color = fg, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+        }
+    }
+}
+
+@Composable
+private fun SpoofBanner() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(SgMedical.tile)
+            .padding(12.dp)
+    ) {
+        Text("GPS signal spoofed", color = SgMedical.title, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "Position is frozen to the last trusted fix. Use the compass below to continue with dead reckoning.",
+            color = SgMedical.subtitle,
+            fontSize = 13.sp,
+            lineHeight = 18.sp
+        )
+    }
+}
+
+@Composable
+private fun DemoSpoofControl(spoofed: Boolean, onSetSpoof: (Boolean) -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text("Demo control", color = SgTextMuted, fontSize = 11.sp, fontWeight = FontWeight.Medium, letterSpacing = 1.sp)
+        Spacer(Modifier.height(8.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(if (spoofed) SgHospital.tile else SgRaised)
+                .clickable { onSetSpoof(!spoofed) }
+                .padding(vertical = 14.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = if (spoofed) "Restore GPS" else "Simulate GPS spoof",
+                color = if (spoofed) SgHospital.icon else SgText,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
     }
 }
 
