@@ -23,6 +23,7 @@
 | Voice loop (mic→STT→RAG→LLM→TTS) | P2 | DONE | Wired; stub ASR until P1 | 2026-06-28 |
 | Solar compass (heading) | P2 | DONE | 4/4 Python solar sanity checks pass | 2026-06-28 |
 | GPS spoof detection + 3-tier fallback | P2 | DONE | Unit tests + demo steps in DEMO.md | 2026-06-28 |
+| GPS + airplane-mode live wiring | P2 | DONE | `LocationManager` + spoof freeze + live airplane badge wired on `p1/nav-wire`; Gradle test task is blocked by existing Compose compiler plugin config | 2026-06-28 |
 | Translation | P2 | DONE | Bonus screen wired | 2026-06-28 |
 | SOS card | P2 | DONE | Bonus screen wired | 2026-06-28 |
 | README + MIT license + diagram | P2 | DONE | Root README.md + LICENSE | 2026-06-28 |
@@ -33,4 +34,4 @@
 | WSL env not set up | P1 (human) | Run `bash runtime/scripts/setup_wsl.sh` in interactive WSL |
 | QNN SDK not downloaded | P1 (human) | Qualcomm account → QNN 2.37.0 → `~/qnn/2.37.0/` |
 | Android app not built on hardware | Both | Open `android/` in Android Studio, run on S25 Ultra |
-| Gradle never run locally | P2 verify | `./gradlew test` in `android/` after Android Studio sync |
+| Gradle unit tests blocked in config | P2 build owner | `./gradlew.bat testDebugUnitTest` stops before tests because Kotlin 2.0 + Compose requires the Compose compiler Gradle plugin in `android/` build scripts |

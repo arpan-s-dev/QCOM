@@ -22,6 +22,18 @@ class PositionStateMachineTest {
     }
 
     @Test
+    fun `gps spoofed keeps the last trusted fix frozen`() {
+        val state = PositionState(
+            source = PositionSource.GPS_TRUSTED,
+            lastTrustedLat = 37.3,
+            lastTrustedLon = -121.9
+        )
+        val next = PositionStateMachine.transition(state, gpsAvailable = true, gpsSpoofed = true)
+        assertEquals(37.3, next.lastTrustedLat ?: Double.NaN, 0.0)
+        assertEquals(-121.9, next.lastTrustedLon ?: Double.NaN, 0.0)
+    }
+
+    @Test
     fun `gps unavailable without spoof falls back to dead reckoning without spoof flag`() {
         val state = PositionState(source = PositionSource.GPS_TRUSTED)
         val next = PositionStateMachine.transition(state, gpsAvailable = false, gpsSpoofed = false)

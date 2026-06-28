@@ -35,8 +35,8 @@ data class AppUiState(
     val messages: List<ChatMessage> = emptyList(),
     val inputText: String = "",
     val isListening: Boolean = false,
-    val positionState: PositionState = PositionState(source = PositionSource.GPS_TRUSTED),
-    val airplaneModeOn: Boolean = true,
+    val positionState: PositionState = PositionState(source = PositionSource.DEAD_RECKONING),
+    val airplaneModeOn: Boolean = false,
 
     // ORIENT screen state
     val sunAzimuthDeg: Double? = null,
@@ -159,6 +159,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         refreshSunPosition()
     }
 
+    fun updateAirplaneMode(isOn: Boolean) {
+        _uiState.value = _uiState.value.copy(airplaneModeOn = isOn)
+    }
+
     /**
      * User has physically pointed the phone's top edge at the sun and tapped
      * "SIGHT SUN." [rawDeviceBearing] is whatever the magnetometer/rotation
@@ -237,9 +241,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     //     collector once that's wired to real sensors; exposed here so the UI
     //     layer and SpoofDetector tests have a single place to push updates) ---
 
-    fun updatePositionState(gpsAvailable: Boolean, gpsSpoofed: Boolean) {
+    fun updatePositionState(
+        gpsAvailable: Boolean,
+        gpsSpoofed: Boolean,
+        trustedLat: Double? = null,
+        trustedLon: Double? = null
+    ) {
         val current = _uiState.value.positionState
-        val next = PositionStateMachine.transition(current, gpsAvailable, gpsSpoofed)
+        val seededState = current.copy(
+            lastTrustedLat = trustedLat ?: current.lastTrustedLat,
+            lastTrustedLon = trustedLon ?: current.lastTrustedLon
+        )
+        val next = PositionStateMachine.transition(seededState, gpsAvailable, gpsSpoofed)
         _uiState.value = _uiState.value.copy(positionState = next)
     }
 

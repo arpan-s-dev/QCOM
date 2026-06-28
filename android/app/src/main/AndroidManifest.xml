@@ -6,6 +6,7 @@
     <!-- Location for GPS_TRUSTED / spoof detection / dead reckoning baseline -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- No INTERNET permission requested at all -- this app is designed to
          never need network access, and intentionally omitting it is a small
          but real signal during the demo: it cannot phone home even if it wanted to. -->

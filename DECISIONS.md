@@ -40,3 +40,4 @@ Person 2 expanded the original two-method sketch. Person 1 implements all method
 - `2026-06-28` | QNN version mismatch (Error 5000 "Qnn API version mismatched") is the top failure mode — pin versions across build + device.
 - `2026-06-28` | repo | Person 2 uploaded `track2manjeet.zip` to main instead of source tree — extracted to `android/` on `integrate/lodestar-v1`.
 - `2026-06-28` | WSL | `runtime/` only exists on integration branch, not old `main` — `git pull` + checkout correct branch before running setup scripts.
+- `2026-06-28` | android | `./gradlew.bat testDebugUnitTest` currently fails during configuration because Kotlin 2.0 + Compose now requires the Compose compiler Gradle plugin in the existing build scripts.
