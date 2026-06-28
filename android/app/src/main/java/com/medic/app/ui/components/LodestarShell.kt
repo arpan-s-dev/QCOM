@@ -5,6 +5,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -53,8 +54,8 @@ fun LodestarShell(
             transitionSpec = {
                 val forward = sectionIndex(targetState) > sectionIndex(initialState)
                 val offset = { fullWidth: Int -> if (forward) fullWidth / 4 else -fullWidth / 4 }
-                (fadeIn(LodestarMotion.tabEnter) + slideInHorizontally(initialOffsetX = offset))
-                    .togetherWith(fadeOut(LodestarMotion.tabExit) + slideOutHorizontally(targetOffsetX = offset))
+                (fadeIn(tween(durationMillis = LodestarMotion.tabEnterMillis)) + slideInHorizontally(initialOffsetX = offset))
+                    .togetherWith(fadeOut(tween(durationMillis = LodestarMotion.tabExitMillis)) + slideOutHorizontally(targetOffsetX = offset))
             },
             label = "lodestar-section"
         ) { section ->
