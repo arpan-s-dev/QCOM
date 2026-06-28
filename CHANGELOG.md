@@ -9,3 +9,5 @@
 2026-06-28 04:30 | Cursor | scope | SF hospitals offline + field-kit reference + remove airplane badge
 2026-06-28 06:00 | Cursor/P1 | nav | Night-sky star navigation: CV detection + catalog plate-solve + ORIENT night mode
 2026-06-28 06:15 | Cursor/P1 | docs | README, DEMO, PITCH_OUTLINE updated for night-sky star nav
+2026-06-28 03:59 | Copilot/P2 | android | Fix Gradle/Compose/resources, bundle first-aid corpus into assets, add startup CorpusLoader + tests, update README names
+2026-06-28 06:22 | Copilot/APP-BUILD | android | Merge p2 integration into app build branch, validate with JDK 17, and install debug build on S25 Ultra

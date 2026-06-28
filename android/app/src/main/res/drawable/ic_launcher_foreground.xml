@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="@color/lodestar_launcher_fg"
+        android:pathData="M54,14 L66,42 L94,54 L66,66 L54,94 L42,66 L14,54 L42,42 Z" />
+    <path
+        android:fillColor="@color/lodestar_launcher_bg"
+        android:pathData="M54,31 L61,47 L77,54 L61,61 L54,77 L47,61 L31,54 L47,47 Z" />
+</vector>
