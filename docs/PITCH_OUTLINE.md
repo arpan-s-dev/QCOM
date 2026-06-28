@@ -55,8 +55,9 @@
 ## 6. What we built: an app that assumes GPS is gone
 - **TREAT** — voice or text first-aid triage, fully offline, grounded in a real TCCC/MARCH
   first-aid corpus with citations, gated by a deterministic safety tree (not just "ask the LLM")
-- **ORIENT** — when GPS is gone, fall back to dead reckoning, then to a **solar compass** that
-  derives true north from the sun's position and the time of day — works with zero satellites
+- **ORIENT** — when GPS is gone, fall back to dead reckoning, then to a **solar compass** (day)
+  or **night-sky star plate-solve** (import photo → CV detection + catalog geometry) — both derive
+  true north with zero satellites and zero network
 - **COMMUNICATE** — medic↔casualty translation and a structured SOS summary, both offline
 
 *[Live demo happens here — see DEMO.md]*
@@ -65,7 +66,7 @@
 
 ## 7. The signature element: you can SEE the trust level
 - A persistent status strip, visible on every screen, shows exactly which position source is
-  active: `GPS_TRUSTED` → `DEAD_RECKONING` → `SOLAR_FIX`
+  active: `GPS_TRUSTED` → `DEAD_RECKONING` → `SOLAR_FIX` / `STAR_FIX`
 - A pulsing position-source indicator makes trust level visible at a glance (no fake airplane badge)
   at a glance, not buried in a settings menu
 - When we simulate a GPS spoof live, the strip **flips in real time** and freezes to the last
@@ -85,8 +86,8 @@
 
 ## 9. Honest roadmap — what's real vs. what's next
 **Real today:** safety tree (tested), solar math (verified against NOAA/Meeus, sanity-checked
-for this location/season), spoof detection (tested), full Compose UI, RAG architecture and
-prompt grounding.
+for this location/season), **night-sky star navigation** (`CvStarDetector` + catalog plate-solve
++ demo fallback), spoof detection (tested), full Compose UI, RAG architecture and prompt grounding.
 **Stubbed today, swappable tomorrow:** the actual on-device LLM/embedder/ASR — built entirely
 against one interface (`AiService`) so plugging in the real Snapdragon-optimized models is a
 one-line change, not a rewrite.

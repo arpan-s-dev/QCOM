@@ -23,6 +23,9 @@
 4. Confirm Solar sighting works: check that wherever you are demoing has a visible sun (or skip
    straight to a pre-recorded screen capture of the ORIENT screen if you're indoors — say so
    explicitly rather than faking it live).
+5. **Night-sky demo:** have the teammate's outdoor night-sky photo on the phone (rename to include
+   `night` or `demo_night` in the filename so the precomputed fallback matches). Grant photo
+   picker access if prompted.
 
 ---
 
@@ -69,7 +72,7 @@ This is the centerpiece. Two ways to do it depending on what you have time/tools
 
 ## Beat 4 — "When even GPS estimation runs out, here's the sun." (~60s)
 
-- Switch to ORIENT.
+- Switch to ORIENT → **Solar (day)** tab.
 - If indoors or the sun isn't visible: narrate the screen instead of performing the sighting
   gesture, and say so plainly ("we'll show you the math, not fake the sighting").
 - If outdoors with sun visible: hold the phone with the top edge pointed at the sun, tap "SIGHT
@@ -78,6 +81,17 @@ This is the centerpiece. Two ways to do it depending on what you have time/tools
 - Narration: "This isn't guessing. NOAA/Meeus solar position math, the same kind used in
   real navigation software — we verified it against known sunrise/sunset/solar-noon directions
   for this location before trusting it."
+
+## Beat 4b — "At night, use the stars." (~45s) — headline feature
+
+- Stay on ORIENT → switch to **Night sky (stars)** tab.
+- Tap **IMPORT NIGHT-SKY PHOTO** and pick the pre-staged outdoor photo.
+- Show: star detection count, compass needle updating to true north, status strip → `STAR_FIX`.
+- Narration: "Classical computer vision finds bright star points — no neural network training.
+  We plate-solve against a bundled Yale bright-star catalog, fully offline. For our demo photo
+  we also ship a precomputed fallback keyed by filename so the stage demo can't fail."
+- Point at the disclaimer: *"Heading from star field — accuracy depends on image quality."*
+  Approximate latitude is shown with a ± band — not GPS-grade.
 
 ## Beat 5 — Close (~30s)
 
@@ -97,6 +111,6 @@ This is the centerpiece. Two ways to do it depending on what you have time/tools
 - **Mock-location demo doesn't trigger:** use Option B above. Don't improvise a fake UI state —
   show the passing test instead, and say that's what you're doing.
 - **Solar sighting unavailable (no sun/indoors):** narrate over a description or a pre-recorded
-  clip; say plainly that you're doing so.
+  clip; say plainly that you're doing so — or pivot to **Beat 4b (night sky)** with the staged photo.
 - **App crashes:** have a 60-second screen recording of a successful run on a backup device or
   laptop as an absolute last resort, and say so before playing it.

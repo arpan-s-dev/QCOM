@@ -7,12 +7,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.unit.dp
 import com.medic.app.ui.theme.CompassBrass
-import com.medic.app.ui.theme.FieldType
 import com.medic.app.ui.theme.LodestarMotion
 import com.medic.app.ui.theme.ModerateYellow
 import com.medic.app.ui.theme.NeutralGray

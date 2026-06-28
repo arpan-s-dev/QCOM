@@ -15,11 +15,11 @@ License: MIT (see `LICENSE`). **Setup:** see `SETUP.md`.
 ## What it does
 
 - **TREAT** — voice/text triage (SafetyTree severity) + RAG first-aid guidance + **field-kit reference** tab (safe use, not prescriptions).
-- **ORIENT** — true-north heading via solar compass; **offline SF hospital distances** from cached approximate position (nearest 3, bearing + km).
+- **ORIENT** — true-north heading via **solar compass (day)** or **night-sky star plate-solve (night)** — import a photo, CV star detection + Yale catalog match; **offline SF hospital distances** from cached approximate position (nearest 3, bearing + km).
 - **COMMUNICATE** — medic↔casualty translation + SOS distress summary card.
 
 **Signature UI:** persistent status strip with position source (`GPS_TRUSTED` /
-`DEAD_RECKONING` / `SOLAR_FIX`). No `INTERNET` permission.
+`DEAD_RECKONING` / `SOLAR_FIX` / `STAR_FIX`). No `INTERNET` permission.
 
 ---
 
@@ -71,6 +71,7 @@ flowchart TD
     subgraph CORE["Deterministic logic"]
         ST[SafetyTree]
         SC[SolarCompass]
+        SN[StarDetector + StarSolver]
         SD[SpoofDetector]
     end
     subgraph AI["AiService interface"]
