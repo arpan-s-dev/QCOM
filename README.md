@@ -5,8 +5,8 @@ GPS jammed, network down, airplane mode on — talk to your phone for true-north
 first-aid triage. All inference on the Snapdragon NPU.
 
 Built by:
-- **[Person 1 Name]** — [email] — on-device AI models (ExecuTorch + QNN)
-- **[Person 2 Name]** — [email] — app, medical corpus, navigation, pitch
+- **Arpanjeet Singh** — 106011010+arpan-s-dev@users.noreply.github.com — on-device AI models (ExecuTorch + QNN)
+- **Manjeet Singh** — 62642705+manjeetsingh-satveer@users.noreply.github.com — app, medical corpus, navigation, pitch
 
 License: MIT (see `LICENSE`). **New chat / agents:** read **`HANDOFF.md`** first. Copilot prompts: **`COPILOT_AGENTS.md`**. Setup: `SETUP.md`.
 

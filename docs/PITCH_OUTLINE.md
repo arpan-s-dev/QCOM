@@ -1,12 +1,12 @@
-# Pitch Outline — Medic Offline
+# Pitch Outline — Lodestar
 
 10 slides. Each bullet is what goes ON the slide; speaker notes are in italics below each.
 
 ---
 
 ## 1. Title
-**Medic Offline** — first aid, navigation, and communication that work with zero signal.
-*Built for the Qualcomm Snapdragon 8 Elite hackathon. Names/contacts on the last slide.*
+**Lodestar** — first aid, navigation, and communication that work with zero signal.
+*Built for the Qualcomm Snapdragon 8 Elite / ExecuTorch hackathon. Names and contacts on the last slide.*
 
 ---
 
@@ -67,8 +67,8 @@
 ## 7. The signature element: you can SEE the trust level
 - A persistent status strip, visible on every screen, shows exactly which position source is
   active: `GPS_TRUSTED` → `DEAD_RECKONING` → `SOLAR_FIX` / `STAR_FIX`
-- A pulsing position-source indicator makes trust level visible at a glance (no fake airplane badge)
-  at a glance, not buried in a settings menu
+- A pulsing position-source indicator makes trust level visible at a glance — not buried in a
+  settings menu, and no fake airplane badge needed
 - When we simulate a GPS spoof live, the strip **flips in real time** and freezes to the last
   trusted position instead of silently trusting a forged signal
 
@@ -84,19 +84,25 @@
 
 ---
 
-## 9. Honest roadmap — what's real vs. what's next
-**Real today:** safety tree (tested), solar math (verified against NOAA/Meeus, sanity-checked
-for this location/season), **night-sky star navigation** (`CvStarDetector` + catalog plate-solve
-+ demo fallback), spoof detection (tested), full Compose UI, RAG architecture and prompt grounding.
-**Stubbed today, swappable tomorrow:** the actual on-device LLM/embedder/ASR — built entirely
-against one interface (`AiService`) so plugging in the real Snapdragon-optimized models is a
-one-line change, not a rewrite.
-**Known limitations we're not hiding:** corpus is 93 chunks (not yet 200+), spoof detection is
-a speed-gate heuristic (not Kalman-filtered), camera-composited AR compass overlay not wired yet.
+## 9. Live today vs. roadmap next
+**Live today**
+- SafetyTree triage with tested negation handling
+- Solar heading and night-sky photo heading, both fully offline
+- Offline SF hospitals from bundled JSON
+- Spoof-detection logic and trust-state UI
+- Full app shell, RAG plumbing, and `AiService` abstraction
+
+**Roadmap / only claim if landed before demo**
+- Snapdragon NPU-backed `RealAiService` for generation, embeddings, and ASR
+- More medical corpus depth beyond the current 93 curated chunks
+- Stronger spoof filtering beyond the current speed-gate heuristic
+- Camera-composited AR heading overlay
+
+*Speaker note: be explicit that the deterministic safety layer is real today even if the LLM layer remains stubbed.*
 
 ---
 
 ## 10. Team / contact
-- [Person 1 name] — [email] — AI models, embeddings, on-device inference
-- [Person 2 name] — [email] — app, medical corpus + safety tree, navigation, this pitch
-- Code: [repo link] · MIT licensed · Built in [N] hours
+- Arpanjeet Singh — 106011010+arpan-s-dev@users.noreply.github.com — AI models, embeddings, on-device inference
+- Manjeet Singh — 62642705+manjeetsingh-satveer@users.noreply.github.com — app, medical corpus + safety tree, navigation, pitch
+- Code: https://github.com/arpan-s-dev/QCOM · MIT licensed

@@ -1,116 +1,93 @@
-# DEMO.md — Run of Show
+# DEMO.md — 5-minute judge script
 
-**Total target time: ~4-5 minutes live demo, inside a ~10 minute slot with the pitch.**
+**Target:** 4-5 minutes live, inside a ~10 minute pitch slot.
 
-> Honesty checkpoint before you demo: this app has been written but not compiled/run on a
-> real device by the person who wrote this file (sandboxed build environment, no Android SDK).
-> Build it in Android Studio and run through this whole script at least once, well before your
-> slot, so you're not debugging live. If something doesn't compile, the most likely first
-> issues are Gradle/Compose BOM version mismatches — bump versions via Android Studio's
-> suggested fixes rather than hand-editing further.
+## What is honest to claim today
 
----
-
-## Pre-demo setup (do this before you're on stage)
-
-1. Phone in airplane mode, mic and location permissions already granted (grant them in a
-   previous run so you don't eat time on a permission dialog mid-demo).
-2. Make sure Developer Options → "Allow mock locations" is enabled, and the app you'll use to
-   inject a mock location (e.g. a simple mock-location app, or `adb` from a laptop) is set as
-   the mock location provider.
-3. Have a real GPS fix established BEFORE going into airplane mode if your flow depends on a
-   last-known-trusted location for the spoof-freeze demo to look right.
-4. Confirm Solar sighting works: check that wherever you are demoing has a visible sun (or skip
-   straight to a pre-recorded screen capture of the ORIENT screen if you're indoors — say so
-   explicitly rather than faking it live).
-5. **Night-sky demo:** have the teammate's outdoor night-sky photo on the phone (rename to include
-   `night` or `demo_night` in the filename so the precomputed fallback matches). Grant photo
-   picker access if prompted.
+- **Live now:** deterministic SafetyTree triage, solar heading, night-sky photo flow, offline SF hospitals, spoof-detection logic, Compose UI, airplane-mode operation.
+- **Only claim NPU language generation / ASR if it is actually landed on the device.**
+- If `RealAiService` is **not** wired by demo time, say this plainly: **"The safety decision is live and deterministic; the fluent assistant response is still coming from our stubbed AI service today."**
 
 ---
 
-## Beat 1 — "Offline, no network." (~30s)
+## Pre-stage checklist
 
-- Open the app. Point at the status strip immediately.
-- Toggle airplane mode on the phone if it isn't already — narrate: "No SIM, no WiFi, no
-  internet permission in the manifest — all data and models are on-device."
-- The position pill should read `GPS_TRUSTED` with a slow pulse (real GPS still works without
-  cellular/Wi‑Fi). No decorative airplane badge — the app just works offline.
-
-## Beat 2 — "Speak a wound." (~60-90s)
-
-- Switch to TREAT. Press the mic button.
-- Say something with a clear negation case, since that's the thing you tested hardest, e.g.:
-  *"There's a lot of blood on his leg and it hasn't stopped."*
-- Wait for: transcript appears as a user message → CRITICAL tag appears → spoken answer plays
-  via TTS → on-screen disclaimer is visible under the answer.
-- Optionally do a second, calmer example to show the SERIOUS/MODERATE distinction, e.g.
-  *"The bleeding has stopped now, we got a bandage on it."* — should NOT come back CRITICAL.
-- Narration line: "The severity label never comes from the language model — it comes from a
-  deterministic rule engine underneath. The model can only explain, not downgrade."
-
-## Beat 3 — "Now we kill GPS trust." (~60-90s)
-
-This is the centerpiece. Two ways to do it depending on what you have time/tools for:
-
-**Option A (real spoof demo, requires mock-location setup above):**
-1. While the app is in the foreground, use your mock-location tool to feed it a location that's
-   physically impossible given elapsed time (e.g. teleport ~50km in a couple of seconds).
-2. The status strip should flip from `GPS_TRUSTED` to `DEAD_RECKONING`, the pulse should speed
-   up, and "SPOOF_DETECTED — frozen to last trusted fix" should appear under the label.
-3. Narration: "It didn't just accept that. It compared the jump against what's physically
-   possible and froze to the last position it actually trusted."
-
-**Option B (no mock-location tooling available / time-constrained):**
-1. Show the `SpoofDetectorTest.kt` test file and/or run the equivalent verification script
-   live (`scripts/verify_safety_tree.py` and a quick spoof check) to prove the logic, then
-   show the STATIC `StatusStrip` states by toggling a debug switch in the app (if you wire one
-   in) or by describing what Option A would show.
-2. Be straightforward that this is the fallback path: "We'll show you the test proving this
-   logic is correct; the live trigger needs mock-location tooling we don't have rigged right
-   now."
-
-## Beat 4 — "When even GPS estimation runs out, here's the sun." (~60s)
-
-- Switch to ORIENT → **Solar (day)** tab.
-- If indoors or the sun isn't visible: narrate the screen instead of performing the sighting
-  gesture, and say so plainly ("we'll show you the math, not fake the sighting").
-- If outdoors with sun visible: hold the phone with the top edge pointed at the sun, tap "SIGHT
-  SUN," and show the compass ring update with the corrected heading needle plus the yellow sun
-  marker at its computed azimuth.
-- Narration: "This isn't guessing. NOAA/Meeus solar position math, the same kind used in
-  real navigation software — we verified it against known sunrise/sunset/solar-noon directions
-  for this location before trusting it."
-
-## Beat 4b — "At night, use the stars." (~45s) — headline feature
-
-- Stay on ORIENT → switch to **Night sky (stars)** tab.
-- Tap **IMPORT NIGHT-SKY PHOTO** and pick the pre-staged outdoor photo.
-- Show: star detection count, compass needle updating to true north, status strip → `STAR_FIX`.
-- Narration: "Classical computer vision finds bright star points — no neural network training.
-  We plate-solve against a bundled Yale bright-star catalog, fully offline. For our demo photo
-  we also ship a precomputed fallback keyed by filename so the stage demo can't fail."
-- Point at the disclaimer: *"Heading from star field — accuracy depends on image quality."*
-  Approximate latitude is shown with a ± band — not GPS-grade.
-
-## Beat 5 — Close (~30s)
-
-- Quick cut to COMMUNICATE: show the SOS card populated from the conversation so far, and/or
-  the two-field translation box.
-- Land the close line: "Everything you just saw ran with zero network connectivity. The only
-  thing we haven't wired in yet is swapping the placeholder language model for the real
-  on-device one — and that's a one-line change, because we built the whole app against a single
-  interface from day one."
+1. Put the phone in **airplane mode** and confirm mic, speaker, and location permissions are already granted.
+2. Open the app once before walking on stage so the first screen is warm.
+3. For the **solar** path, confirm the sun is visible; otherwise plan to use the **night-sky photo** path instead.
+4. For the **star** path, pre-stage an outdoor night-sky image on the phone. Keep `night` or `demo_night` in the filename so the fallback mapping still works.
+5. If you want the **optional spoof** moment, enable mock locations ahead of time and have the tool ready.
 
 ---
 
-## If something breaks live
+## Judge script
 
-- **Mic/TTS doesn't work:** fall back to typing the query into the text field — the chat surface
-  and safety tree work identically either way; only the audio I/O layer is skipped.
-- **Mock-location demo doesn't trigger:** use Option B above. Don't improvise a fake UI state —
-  show the passing test instead, and say that's what you're doing.
-- **Solar sighting unavailable (no sun/indoors):** narrate over a description or a pre-recorded
-  clip; say plainly that you're doing so — or pivot to **Beat 4b (night sky)** with the staged photo.
-- **App crashes:** have a 60-second screen recording of a successful run on a backup device or
-  laptop as an absolute last resort, and say so before playing it.
+### 0:00-0:30 — Open with offline truth
+
+- Open Lodestar and point at the status strip first.
+- Say: **"This phone is in airplane mode. No cloud calls, no map API, no Street View, and no internet requirement at runtime."**
+- If the position pill already shows `GPS_TRUSTED`, add: **"Even in airplane mode, we can still use device sensors and GPS when we trust it."**
+
+### 0:30-1:45 — TREAT: negation is the real safety demo
+
+- Go to **TREAT** and use the mic or type if audio is flaky.
+- Say: **"There's a lot of blood on his leg and it hasn't stopped."**
+- Wait for the transcript, severity label, answer, and disclaimer.
+- Narrate: **"The important part is not the wording flair. The CRITICAL label comes from a deterministic safety tree, not the language model."**
+- Immediately contrast with: **"The bleeding has stopped now, we got a bandage on it."**
+- Call out the negation difference: **"We specifically tested 'hasn't stopped' versus 'has stopped now' because that's the failure mode that matters."**
+- If the NPU backend is still pending, say: **"Today the explanation text is stubbed, but the safety classification and offline workflow are real."**
+
+### 1:45-3:00 — ORIENT: use the sun or the stars
+
+Choose **one** live path based on the room. Do not fake both.
+
+**Option A — Solar (daytime, recommended when the sun is visible)**
+
+- Switch to **ORIENT → Solar**.
+- Hold the phone toward the sun and tap **SIGHT SUN**.
+- Say: **"When GPS is degraded, we can still recover true heading from solar position math, fully offline."**
+- Point out the compass update and corrected heading.
+
+**Option B — Night sky photo (recommended indoors or when lighting is bad)**
+
+- Switch to **ORIENT → Night sky**.
+- Tap **IMPORT NIGHT-SKY PHOTO** and select the staged image.
+- Show the detected stars, the heading result, and the `STAR_FIX` state.
+- Say: **"This is classical computer vision plus a bundled bright-star catalog. No network, no model training, and we ship a demo-safe fallback for the staged image."**
+
+### 3:00-3:45 — Hospitals: nearest help still works offline
+
+- Stay in **ORIENT** and open the hospitals panel/list.
+- Show the nearest 3 San Francisco hospitals with distance and bearing.
+- Say: **"These are baked from offline JSON. If connectivity is down, we still have a practical direction-of-travel aid for known emergency sites."**
+- Keep the wording honest: this is **heading guidance**, not turn-by-turn navigation.
+
+### 3:45-4:30 — Optional GPS spoof moment
+
+Only do this if the tooling is ready. Otherwise skip it cleanly.
+
+**Live spoof path**
+
+1. Feed a physically impossible jump with mock location tooling.
+2. Show the status strip changing from `GPS_TRUSTED` to `DEAD_RECKONING`.
+3. Say: **"We do not silently trust impossible jumps. We freeze to the last trusted position and surface the trust downgrade."**
+
+**If you skip it**
+
+- Say: **"We tested spoof detection, but we're skipping the live trigger to stay inside time."**
+
+### 4:30-5:00 — Close
+
+- Land on **COMMUNICATE** or back on the status strip.
+- Say: **"What you saw was offline triage, offline heading recovery, and offline hospital reference in airplane mode. If the Snapdragon NPU language stack lands in time, the same app swaps from stub AI to real on-device generation through one interface."**
+
+---
+
+## Failure-safe fallbacks
+
+- **Mic or TTS fails:** type the prompt and keep the negation demo.
+- **Sun not visible:** use the night-sky photo path and say why.
+- **Night-sky import misbehaves:** narrate the expected `STAR_FIX` result from the staged asset; do not fake interaction.
+- **Spoof tooling is not ready:** skip it and keep the rest of the flow.
+- **NPU backend does not land:** say "stubbed AI service today" once, confidently, then move on.
