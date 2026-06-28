@@ -1,6 +1,6 @@
 # STATUS.md — Live Dashboard
 
-> Updated 2026-06-28 (Cursor NPU agent). **Read HANDOFF.md for full context.**
+> Updated 2026-06-28 (Copilot APP agent). **Read HANDOFF.md for full context.**
 
 ## DE-RISK GATE
 **Stock `.pte` on NPU + QNN pinned?  [ ] NO**
@@ -21,8 +21,8 @@
 
 ### Integration (Claude APP + gh)
 - [ ] Merge `p2/integrate-lodestar-v1` + `feature/star-navigation` → **`demo/final`**
-- [ ] Java 17 for Gradle (not Java 25)
-- [ ] `gradlew.bat installDebug` on S25
+- [x] Java 17 for Gradle (not Java 25)
+- [x] `gradlew.bat installDebug` on S25
 - [ ] PR `demo/final` → `main` via `gh`
 
 ### Models (Cursor NPU — after gate)
@@ -39,33 +39,31 @@
 ---
 
 ## Components
+| Component | Owner | Status | Notes | Last updated |
+|---|---|---|---|---|
+| QNN env + stock `.pte` on NPU | P1 | IN_PROGRESS | `runtime/` scripts on `integrate/lodestar-v1`; WSL setup pending | 2026-06-28 |
+| Llama 3.2 3B (Q4) on NPU | P1 | TODO | 1B fallback if <10 tok/s or throttling | — |
+| Whisper-Base/Tiny on NPU | P1 | TODO | From AI Hub | — |
+| `AiService` real impl | P1 | TODO | Replaces StubAiService; see expanded interface in DECISIONS.md | — |
+| Airplane-mode harness + NPU metrics | P1 | TODO | The 40% evidence | — |
+| BGE-small embedder (for RAG) | P1 | TODO | NPU or CPU | — |
+| Android gradle test | P2 | DONE | PASS — `gradlew.bat test` succeeds with JDK 17 on `p1/app-crunch` | 2026-06-28 |
+| Android installDebug on S25 Ultra | P2 | DONE | PASS — installed to `R3CXC07ZZWL` with `gradlew.bat installDebug` | 2026-06-28 |
+| Bundled corpus asset loader | P2 | DONE | `first_aid_corpus.json` bundled in app assets; `CorpusLoader` populates `MainViewModel` on init | 2026-06-28 |
+| Compose shell + status strip | P2 | DONE | `android/app/.../ui` | 2026-06-28 |
+| `StubAiService` (canned) | P2 | DONE | `android/app/.../ai/AiService.kt` | 2026-06-28 |
+| Medical first-aid corpus (TCCC/MARCH) | P2 | DONE | 93 chunks in `corpus/` | 2026-06-28 |
+| RAG retrieval + grounded prompt | P2 | DONE | Interfaces ready; needs P1 embedder for real vectors | 2026-06-28 |
+| Deterministic safety tree | P2 | DONE | 16/16 Python tests pass | 2026-06-28 |
+| Voice loop (mic→STT→RAG→LLM→TTS) | P2 | DONE | Wired; stub ASR until P1 | 2026-06-28 |
+| Solar compass (heading) | P2 | DONE | 4/4 Python solar sanity checks pass | 2026-06-28 |
+| GPS spoof detection + 3-tier fallback | P2 | DONE | `LocationManager` now feeds `updateRoughLocation()` and `SpoofDetector` updates the status strip | 2026-06-28 |
+| Translation | P2 | DONE | Bonus screen wired | 2026-06-28 |
+| SOS card | P2 | DONE | Bonus screen wired | 2026-06-28 |
+| README + MIT license + diagram | P2 | DONE | Root README.md + LICENSE | 2026-06-28 |
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| QNN env + NPU gate | IN_PROGRESS | verify_env OK; build_executorch running (CMake configure phase) |
-| Llama / Whisper / RealAiService | TODO | After gate |
-| Android app features | DONE (code) | star-nav, hospitals, field kit, triage |
-| Android build + corpus APK | DONE on `p2/integrate-lodestar-v1` | needs merge to demo/final |
-| UI polish / animations | TODO | Claude APP after merge |
-| NPU metrics harness | TODO | If time |
-
----
-
-## Active agents
-
-| Agent | Tool | Task | Status |
-|-------|------|------|--------|
-| NPU | Cursor | build_executorch + gate | IN_PROGRESS |
-| APP | Claude | merge → demo/final + install | TODO |
-| SHIP | Claude | README + DEMO | TODO |
-| GIT | gh (Ranji) | PR merge | TODO |
-
----
-
-## Blockers
-
-| Blocker | Fix |
-|---------|-----|
-| `build_executorch` running (~30–60 min) | Monitor: `wsl tail -f ~/lodestar-build.log` |
-| Branches split | Claude APP: merge to `demo/final` |
-| Gradle Java 25 | Set JAVA_HOME to JDK 17 |
+## Current Blockers
+| Blocker | Owner | What's needed |
+|---|---|---|
+| WSL env not set up | P1 (human) | Run `bash runtime/scripts/setup_wsl.sh` in interactive WSL |
+| QNN SDK not downloaded | P1 (human) | Qualcomm account → QNN 2.37.0 → `~/qnn/2.37.0/` |

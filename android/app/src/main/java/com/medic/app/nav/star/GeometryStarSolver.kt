@@ -8,6 +8,7 @@ import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
 import kotlin.math.sqrt
+import kotlin.math.tan
 
 data class CatalogStar(
     val id: String,
@@ -116,7 +117,11 @@ class GeometryStarSolver : StarSolver {
                     if (maxD < 5f) continue
                     out.add(
                         ObsTriangle(
-                            Triple(d12 / maxD, d23 / maxD, d31 / maxD)
+                            Triple(
+                                (d12 / maxD).toDouble(),
+                                (d23 / maxD).toDouble(),
+                                (d31 / maxD).toDouble()
+                            )
                         )
                     )
                 }

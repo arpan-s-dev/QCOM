@@ -12,3 +12,5 @@
 2026-06-28 12:00 | Cursor/P1 | runtime | fix_venv.sh, WSL adb via Windows, verify_env passed, QNN pinned
 2026-06-28 12:30 | Cursor | handoff | HANDOFF.md + AGENTS.md Cursor/Copilot/gh plan; STATUS master checklist
 2026-06-28 13:00 | Cursor | docs | COPILOT_AGENTS.md — per-agent prompts for GitHub Copilot CLI
+2026-06-28 03:59 | Copilot/P2 | android | Fix Gradle/Compose/resources, bundle first-aid corpus into assets, add startup CorpusLoader + tests, update README names
+2026-06-28 10:39 | Copilot/APP | android | Crunch merge: corpus asset wiring restored, GPS/spoof status flow connected, JDK 17/Compose build fixed, tests + installDebug passed

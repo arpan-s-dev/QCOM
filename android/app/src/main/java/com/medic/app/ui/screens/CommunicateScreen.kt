@@ -1,6 +1,7 @@
 package com.medic.app.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
@@ -10,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.medic.app.ui.theme.*
 
@@ -95,9 +97,9 @@ private fun TranslationCard(
         )
         AnimatedVisibility(
             visible = casualtyTranslation.isNotBlank(),
-            enter = fadeIn(LodestarMotion.messageEnter) +
+            enter = fadeIn(tween(durationMillis = LodestarMotion.messageEnterMillis)) +
                 slideInVertically(
-                    animationSpec = LodestarMotion.messageEnter,
+                    animationSpec = tween<IntOffset>(durationMillis = LodestarMotion.messageEnterMillis),
                     initialOffsetY = { it / 4 }
                 )
         ) {
@@ -149,9 +151,9 @@ private fun SosCard(
         )
         AnimatedVisibility(
             visible = injury.isNotBlank(),
-            enter = fadeIn(LodestarMotion.messageEnter) +
+            enter = fadeIn(tween(durationMillis = LodestarMotion.messageEnterMillis)) +
                 slideInVertically(
-                    animationSpec = LodestarMotion.messageEnter,
+                    animationSpec = tween<IntOffset>(durationMillis = LodestarMotion.messageEnterMillis),
                     initialOffsetY = { it / 4 }
                 )
         ) {
