@@ -14,6 +14,7 @@ import com.medic.app.nav.DeviceOrientationReader
 import com.medic.app.ui.AppUiState
 import com.medic.app.ui.screens.CommunicateScreen
 import com.medic.app.ui.screens.OrientScreen
+import com.medic.app.ui.screens.TreatScreen
 import com.medic.app.ui.theme.LodestarMotion
 
 private fun sectionIndex(section: AppSection): Int =
@@ -24,6 +25,7 @@ fun LodestarShell(
     state: AppUiState,
     orientationReader: DeviceOrientationReader,
     onSectionSelected: (AppSection) -> Unit,
+    onTreatSubModeChange: (com.medic.app.ui.screens.TreatSubMode) -> Unit,
     onInputChange: (String) -> Unit,
     onSend: () -> Unit,
     onMicToggle: () -> Unit,
@@ -37,8 +39,7 @@ fun LodestarShell(
         StatusStrip(
             positionSource = state.positionState.source,
             spoofDetected = state.positionState.spoofDetected,
-            headingDegrees = state.positionState.headingDegrees,
-            airplaneModeOn = state.airplaneModeOn
+            headingDegrees = state.positionState.headingDegrees
         )
 
         SectionSwitcher(
@@ -58,13 +59,17 @@ fun LodestarShell(
             label = "lodestar-section"
         ) { section ->
             when (section) {
-                AppSection.TREAT -> ChatSurface(
+                AppSection.TREAT -> TreatScreen(
+                    subMode = state.treatSubMode,
+                    onSubModeChange = onTreatSubModeChange,
                     messages = state.messages,
                     inputText = state.inputText,
                     onInputChange = onInputChange,
                     onSend = onSend,
                     isListening = state.isListening,
                     onMicToggle = onMicToggle,
+                    fieldKitDisclaimer = state.fieldKitDisclaimer,
+                    fieldKitItems = state.fieldKitItems,
                     modifier = Modifier.fillMaxSize()
                 )
 
@@ -73,6 +78,7 @@ fun LodestarShell(
                     sunAzimuthDeg = state.sunAzimuthDeg,
                     sunElevationDeg = state.sunElevationDeg,
                     correctedHeadingDeg = state.correctedHeadingDeg,
+                    nearestHospitals = state.nearestHospitals,
                     onSightSun = { onSightSun(orientationReader.currentBearingDeg) },
                     modifier = Modifier.fillMaxSize()
                 )

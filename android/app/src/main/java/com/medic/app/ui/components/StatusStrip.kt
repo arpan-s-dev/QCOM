@@ -18,9 +18,8 @@ import com.medic.app.nav.PositionSource
 import com.medic.app.ui.theme.*
 
 /**
- * Signature element: always-visible position trust + airplane mode badge.
- * Position-source colors crossfade smoothly when GPS degrades to dead
- * reckoning or solar fix — the strip tells the story without reading.
+ * Signature element: always-visible position trust indicator.
+ * Pulsing dot speed communicates normal tracking vs spoof alert.
  */
 
 @Composable
@@ -28,7 +27,6 @@ fun StatusStrip(
     positionSource: PositionSource,
     spoofDetected: Boolean,
     headingDegrees: Float?,
-    airplaneModeOn: Boolean,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -36,12 +34,9 @@ fun StatusStrip(
             .fillMaxWidth()
             .background(PanelMoss)
             .padding(horizontal = 14.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         PositionSourcePill(positionSource, spoofDetected, headingDegrees)
-        Spacer(modifier = Modifier.width(8.dp))
-        AirplaneModeBadge(airplaneModeOn)
     }
 }
 
@@ -117,27 +112,4 @@ private fun PulsingDot(color: Color, fast: Boolean) {
             .clip(CircleShape)
             .background(animatedColor)
     )
-}
-
-@Composable
-private fun AirplaneModeBadge(on: Boolean) {
-    val bg by animateColorAsState(
-        targetValue = if (on) SignalOrange else PanelBorder,
-        animationSpec = LodestarMotion.colorCrossfade,
-        label = "airplane-bg"
-    )
-    val fg = if (on) PanelDeep else NeutralGray
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(bg)
-            .padding(horizontal = 12.dp, vertical = 6.dp)
-    ) {
-        Text(
-            text = if (on) "✈ AIRPLANE MODE" else "✈ ONLINE",
-            style = FieldType.statusLabel,
-            color = fg
-        )
-    }
 }

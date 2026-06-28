@@ -9,6 +9,11 @@ import com.medic.app.ai.StubAiService
 import com.medic.app.ai.TriageOrchestrator
 import com.medic.app.ai.VoiceLoopManager
 import com.medic.app.data.CorpusChunk
+import com.medic.app.data.FieldKitItem
+import com.medic.app.data.Hospital
+import com.medic.app.data.HospitalFinder
+import com.medic.app.data.HospitalWithBearing
+import com.medic.app.data.OfflineAssetLoader
 import com.medic.app.nav.PositionSource
 import com.medic.app.nav.PositionState
 import com.medic.app.nav.PositionStateMachine
@@ -16,6 +21,7 @@ import com.medic.app.nav.SolarCompass
 import com.medic.app.ui.components.AppSection
 import com.medic.app.ui.components.ChatMessage
 import com.medic.app.ui.components.Sender
+import com.medic.app.ui.screens.TreatSubMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,11 +38,18 @@ data class SosSummary(
 
 data class AppUiState(
     val section: AppSection = AppSection.TREAT,
+    val treatSubMode: TreatSubMode = TreatSubMode.TRIAGE,
     val messages: List<ChatMessage> = emptyList(),
     val inputText: String = "",
     val isListening: Boolean = false,
-    val positionState: PositionState = PositionState(source = PositionSource.GPS_TRUSTED),
-    val airplaneModeOn: Boolean = true,
+    val positionState: PositionState = PositionState(
+        source = PositionSource.GPS_TRUSTED,
+        lastTrustedLat = 37.7749,
+        lastTrustedLon = -122.4194
+    ),
+    val nearestHospitals: List<HospitalWithBearing> = emptyList(),
+    val fieldKitDisclaimer: String = "",
+    val fieldKitItems: List<FieldKitItem> = emptyList(),
 
     // ORIENT screen state
     val sunAzimuthDeg: Double? = null,
@@ -61,13 +74,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val orchestrator = TriageOrchestrator(aiService, corpus)
     private val voiceLoop = VoiceLoopManager(application)
 
-    // Rough fallback location used only to seed the solar compass before a real
-    // LocationManager fix is available (e.g. first launch, or already in
-    // SOLAR_FIX because GPS is gone). Once a real fix lands, callers should
-    // update this via updateRoughLocation() so solar math uses the best
-    // location actually known, not this hardcoded default.
-    private var roughLat: Double = 37.3
-    private var roughLon: Double = -121.9
+    // Cached last-known fix (simulates pre-jam GPS) refined by heading/DR elsewhere.
+    private var roughLat: Double = 37.7749
+    private var roughLon: Double = -122.4194
+    private val hospitals: List<Hospital> = OfflineAssetLoader.loadHospitals(application)
     private val solarCompass get() = SolarCompass(roughLat, roughLon)
 
     private val _uiState = MutableStateFlow(AppUiState())
@@ -75,17 +85,41 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         voiceLoop.initTts()
+        val (kitDisclaimer, kitItems) = OfflineAssetLoader.loadFieldKit(getApplication())
         _uiState.value = _uiState.value.copy(
             messages = listOf(
                 ChatMessage(
                     id = UUID.randomUUID().toString(),
                     sender = Sender.SYSTEM,
                     text = "Offline first-aid assistant ready. Describe an injury, or press the " +
-                        "mic to speak. This app works with no internet connection."
+                        "mic to speak. Reference only — not a diagnosis or prescription."
                 )
-            )
+            ),
+            fieldKitDisclaimer = kitDisclaimer,
+            fieldKitItems = kitItems
         )
         refreshSunPosition()
+        refreshNearestHospitals()
+    }
+
+    fun onTreatSubModeChange(mode: TreatSubMode) {
+        _uiState.value = _uiState.value.copy(treatSubMode = mode)
+    }
+
+    private fun approximateLat(): Double =
+        _uiState.value.positionState.lastTrustedLat ?: roughLat
+
+    private fun approximateLon(): Double =
+        _uiState.value.positionState.lastTrustedLon ?: roughLon
+
+    private fun refreshNearestHospitals() {
+        val nearest = HospitalFinder.nearest(
+            hospitals = hospitals,
+            approxLat = approximateLat(),
+            approxLon = approximateLon(),
+            count = 3
+        )
+        _uiState.value = _uiState.value.copy(nearestHospitals = nearest)
     }
 
     fun onSectionSelected(section: AppSection) {
@@ -156,7 +190,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun updateRoughLocation(lat: Double, lon: Double) {
         roughLat = lat
         roughLon = lon
+        _uiState.value = _uiState.value.copy(
+            positionState = _uiState.value.positionState.copy(
+                lastTrustedLat = lat,
+                lastTrustedLon = lon
+            )
+        )
         refreshSunPosition()
+        refreshNearestHospitals()
     }
 
     /**
@@ -241,6 +282,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val current = _uiState.value.positionState
         val next = PositionStateMachine.transition(current, gpsAvailable, gpsSpoofed)
         _uiState.value = _uiState.value.copy(positionState = next)
+        refreshNearestHospitals()
     }
 
     override fun onCleared() {

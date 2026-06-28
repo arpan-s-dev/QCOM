@@ -35,6 +35,7 @@ class MainActivity : ComponentActivity() {
                     state = state,
                     orientationReader = orientationReader,
                     onSectionSelected = viewModel::onSectionSelected,
+                    onTreatSubModeChange = viewModel::onTreatSubModeChange,
                     onInputChange = viewModel::onInputChange,
                     onSend = viewModel::onSend,
                     onMicToggle = viewModel::onMicToggle,

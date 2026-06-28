@@ -1,0 +1,24 @@
+{
+  "city": "San Francisco",
+  "note": "Offline reference list only. Distances are from your approximate last-known position, not live GPS.",
+  "hospitals": [
+    { "name": "UCSF Medical Center at Parnassus", "latitude": 37.7631, "longitude": -122.4586 },
+    { "name": "Zuckerberg San Francisco General Hospital", "latitude": 37.7554, "longitude": -122.4045 },
+    { "name": "CPMC Van Ness Campus", "latitude": 37.7865, "longitude": -122.4212 },
+    { "name": "St. Mary's Medical Center", "latitude": 37.7689, "longitude": -122.4460 },
+    { "name": "Kaiser Permanente San Francisco", "latitude": 37.7847, "longitude": -122.4228 },
+    { "name": "Chinese Hospital", "latitude": 37.7956, "longitude": -122.4089 },
+    { "name": "UCSF Medical Center at Mission Bay", "latitude": 37.7670, "longitude": -122.3928 },
+    { "name": "CPMC Davies Campus", "latitude": 37.7869, "longitude": -122.4400 },
+    { "name": "Saint Francis Memorial Hospital", "latitude": 37.7893, "longitude": -122.4166 },
+    { "name": "UCSF Mount Zion", "latitude": 37.7839, "longitude": -122.4338 },
+    { "name": "San Francisco VA Medical Center", "latitude": 37.7825, "longitude": -122.5050 },
+    { "name": "Laguna Honda Hospital", "latitude": 37.7451, "longitude": -122.4590 },
+    { "name": "California Pacific Medical Center — California Campus", "latitude": 37.7864, "longitude": -122.4520 },
+    { "name": "Kaiser Permanente Mission Bay", "latitude": 37.7683, "longitude": -122.3889 },
+    { "name": "UCSF Benioff Children's Hospital San Francisco", "latitude": 37.7649, "longitude": -122.4580 },
+    { "name": "CPMC Pacific Campus", "latitude": 37.7895, "longitude": -122.4270 },
+    { "name": "St. Luke's Campus — Dignity Health", "latitude": 37.7470, "longitude": -122.4205 },
+    { "name": "Langley Porter Psychiatric Hospital (UCSF)", "latitude": 37.7626, "longitude": -122.4578 }
+  ]
+}

@@ -16,6 +16,9 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.unit.dp
 import com.medic.app.nav.PositionSource
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import com.medic.app.data.HospitalWithBearing
 import com.medic.app.ui.theme.*
 import kotlin.math.cos
 import kotlin.math.sin
@@ -26,13 +29,16 @@ fun OrientScreen(
     sunAzimuthDeg: Double?,
     sunElevationDeg: Double?,
     correctedHeadingDeg: Double?,
+    nearestHospitals: List<HospitalWithBearing>,
     onSightSun: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val scroll = rememberScrollState()
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(FieldGreen)
+            .verticalScroll(scroll)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -91,6 +97,10 @@ fun OrientScreen(
                 style = FieldType.caption
             )
         }
+
+        Spacer(modifier = Modifier.height(20.dp))
+        HospitalsNearPanel(nearestHospitals = nearestHospitals)
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 

@@ -66,7 +66,7 @@
 ## 7. The signature element: you can SEE the trust level
 - A persistent status strip, visible on every screen, shows exactly which position source is
   active: `GPS_TRUSTED` → `DEAD_RECKONING` → `SOLAR_FIX`
-- A pulsing indicator and an unmissable AIRPLANE MODE badge make the app's core promise visible
+- A pulsing position-source indicator makes trust level visible at a glance (no fake airplane badge)
   at a glance, not buried in a settings menu
 - When we simulate a GPS spoof live, the strip **flips in real time** and freezes to the last
   trusted position instead of silently trusting a forged signal

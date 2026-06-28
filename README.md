@@ -14,13 +14,12 @@ License: MIT (see `LICENSE`). **Setup:** see `SETUP.md`.
 
 ## What it does
 
-- **TREAT** — voice/text injury description → deterministic safety tree (not the LLM) sets
-  severity → RAG-grounded first-aid guidance from offline TCCC/MARCH corpus → TTS output.
-- **ORIENT** — solar compass true-north heading when GPS is spoofed or unavailable.
+- **TREAT** — voice/text triage (SafetyTree severity) + RAG first-aid guidance + **field-kit reference** tab (safe use, not prescriptions).
+- **ORIENT** — true-north heading via solar compass; **offline SF hospital distances** from cached approximate position (nearest 3, bearing + km).
 - **COMMUNICATE** — medic↔casualty translation + SOS distress summary card.
 
 **Signature UI:** persistent status strip with position source (`GPS_TRUSTED` /
-`DEAD_RECKONING` / `SOLAR_FIX`) + **AIRPLANE MODE** badge. No `INTERNET` permission.
+`DEAD_RECKONING` / `SOLAR_FIX`). No `INTERNET` permission.
 
 ---
 

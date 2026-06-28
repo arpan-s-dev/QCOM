@@ -6,12 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RUNTIME_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 echo "==> Lodestar runtime setup (WSL)"
-
-if ! sudo -n true 2>/dev/null; then
-  echo "This script needs sudo. Run it in an interactive WSL terminal:"
-  echo "  bash runtime/scripts/setup_wsl.sh"
-  exit 1
-fi
+echo "    (sudo will ask for your Linux password — type it and press Enter)"
 
 # --- apt packages ---
 sudo apt-get update

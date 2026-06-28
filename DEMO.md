@@ -26,14 +26,13 @@
 
 ---
 
-## Beat 1 — "It's airplane mode. Watch the badge." (~30s)
+## Beat 1 — "Offline, no network." (~30s)
 
 - Open the app. Point at the status strip immediately.
 - Toggle airplane mode on the phone if it isn't already — narrate: "No SIM, no WiFi, no
-  internet permission requested by this app at all — it's not in the manifest."
-- The AIRPLANE MODE badge should already read on; the position pill should read `GPS_TRUSTED`
-  with a slow, calm pulse (assuming you have a real GPS fix from device sensors, which still
-  work without a SIM/internet).
+  internet permission in the manifest — all data and models are on-device."
+- The position pill should read `GPS_TRUSTED` with a slow pulse (real GPS still works without
+  cellular/Wi‑Fi). No decorative airplane badge — the app just works offline.
 
 ## Beat 2 — "Speak a wound." (~60-90s)
 
