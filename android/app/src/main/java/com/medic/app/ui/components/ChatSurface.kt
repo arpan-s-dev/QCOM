@@ -1,5 +1,9 @@
 package com.medic.app.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.*
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,7 +19,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.unit.dp
 import com.medic.app.core.Severity
 import com.medic.app.ui.theme.*
@@ -26,7 +30,7 @@ data class ChatMessage(
     val id: String,
     val sender: Sender,
     val text: String,
-    val severity: Severity? = null,   // set on ASSISTANT messages that came from the safety tree
+    val severity: Severity? = null,
     val citedChunkIds: List<String> = emptyList(),
     val disclaimerShown: Boolean = false
 )
@@ -51,7 +55,7 @@ fun ChatSurface(
             contentPadding = PaddingValues(vertical = 12.dp)
         ) {
             items(messages, key = { it.id }) { msg ->
-                MessageBubble(msg)
+                AnimatedMessageBubble(msg)
             }
         }
         ChatInputBar(
@@ -65,12 +69,30 @@ fun ChatSurface(
 }
 
 @Composable
+private fun AnimatedMessageBubble(msg: ChatMessage) {
+    var visible by remember(msg.id) { mutableStateOf(false) }
+    LaunchedEffect(msg.id) { visible = true }
+
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(LodestarMotion.messageEnter) +
+            slideInVertically(
+                animationSpec = LodestarMotion.messageEnter,
+                initialOffsetY = { it / 3 }
+            ),
+        modifier = Modifier.animateItem()
+    ) {
+        MessageBubble(msg)
+    }
+}
+
+@Composable
 private fun MessageBubble(msg: ChatMessage) {
     val isUser = msg.sender == Sender.USER
     val bubbleColor = when (msg.sender) {
         Sender.USER -> PanelBorder
-        Sender.ASSISTANT -> PanelDark
-        Sender.SYSTEM -> InkBlack
+        Sender.ASSISTANT -> PanelMoss
+        Sender.SYSTEM -> PanelDeep
     }
     val alignment = if (isUser) Alignment.End else Alignment.Start
 
@@ -90,7 +112,7 @@ private fun MessageBubble(msg: ChatMessage) {
                 .padding(12.dp)
         ) {
             Column {
-                Text(text = msg.text, style = FieldType.body, color = OffWhite)
+                Text(text = msg.text, style = FieldType.body, color = Bone)
                 if (msg.citedChunkIds.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
@@ -133,7 +155,7 @@ private fun ChatInputBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(PanelDark)
+            .background(PanelMoss)
             .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -144,41 +166,77 @@ private fun ChatInputBar(
             onValueChange = onInputChange,
             modifier = Modifier.weight(1f),
             placeholder = { Text("Describe the injury…", style = FieldType.body, color = NeutralGray) },
-            textStyle = FieldType.body.copy(color = OffWhite),
-            shape = RoundedCornerShape(20.dp),
+            textStyle = FieldType.body.copy(color = Bone),
+            shape = RoundedCornerShape(8.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = SignalTeal,
-                unfocusedBorderColor = PanelBorder
+                focusedBorderColor = SignalOrange,
+                unfocusedBorderColor = PanelBorder,
+                cursorColor = SignalOrange,
+                focusedContainerColor = PanelDeep,
+                unfocusedContainerColor = PanelDeep
             )
         )
         Spacer(modifier = Modifier.width(8.dp))
         IconButton(onClick = onSend) {
-            Icon(Icons.Filled.Send, contentDescription = "Send", tint = SignalTeal)
+            Icon(Icons.Filled.Send, contentDescription = "Send", tint = SignalOrange)
         }
     }
 }
 
 @Composable
 private fun MicButton(isListening: Boolean, onToggle: () -> Unit) {
-    val bg = if (isListening) CriticalRed else PanelBorder
-    IconButton(
-        onClick = onToggle,
-        modifier = Modifier
-            .size(44.dp)
-            .clip(CircleShape)
+    val infiniteTransition = rememberInfiniteTransition(label = "mic-pulse")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.45f,
+        animationSpec = infiniteRepeatable(
+            animation = LodestarMotion.micPulse,
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "mic-scale"
+    )
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.55f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(
+            animation = LodestarMotion.micPulse,
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "mic-ring-alpha"
+    )
+
+    Box(
+        modifier = Modifier.size(48.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Box(
+        if (isListening) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .scale(pulseScale)
+                    .clip(CircleShape)
+                    .background(SignalOrange.copy(alpha = pulseAlpha))
+            )
+        }
+        IconButton(
+            onClick = onToggle,
             modifier = Modifier
                 .size(44.dp)
                 .clip(CircleShape)
-                .background(bg),
-            contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = if (isListening) Icons.Filled.MicOff else Icons.Filled.Mic,
-                contentDescription = if (isListening) "Stop listening" else "Start voice input",
-                tint = if (isListening) Color.White else SignalTeal
-            )
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(if (isListening) SignalOrange else PanelBorder),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = if (isListening) Icons.Filled.MicOff else Icons.Filled.Mic,
+                    contentDescription = if (isListening) "Stop listening" else "Start voice input",
+                    tint = if (isListening) PanelDeep else SignalOrange
+                )
+            }
         }
     }
 }

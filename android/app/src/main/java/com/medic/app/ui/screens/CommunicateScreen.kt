@@ -1,5 +1,8 @@
 package com.medic.app.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,12 +13,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.medic.app.ui.theme.*
 
-/**
- * P2.9 (translation) + P2.10 (SOS card), gated by the spec's "only if 1-2
- * are solid" -- both are intentionally minimal single-screen flows that
- * reuse AiService.translate()/generate() rather than introducing new
- * infrastructure, so they don't compete for time against Phase 1/2.
- */
 @Composable
 fun CommunicateScreen(
     medicText: String,
@@ -33,10 +30,10 @@ fun CommunicateScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(InkBlack)
+            .background(FieldGreen)
             .padding(16.dp)
     ) {
-        Text(text = "COMMUNICATE", style = FieldType.heading, color = OffWhite)
+        Text(text = "COMMUNICATE", style = FieldType.heading, color = Bone)
         Spacer(modifier = Modifier.height(16.dp))
 
         TranslationCard(
@@ -69,33 +66,52 @@ private fun TranslationCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(PanelDark)
+            .clip(RoundedCornerShape(8.dp))
+            .background(PanelMoss)
             .padding(14.dp)
     ) {
-        Text(text = "MEDIC ↔ CASUALTY", style = FieldType.statusLabel, color = SignalTeal)
+        Text(text = "MEDIC ↔ CASUALTY", style = FieldType.statusLabel, color = SignalOrange)
         Spacer(modifier = Modifier.height(10.dp))
         OutlinedTextField(
             value = medicText,
             onValueChange = onMedicTextChange,
             label = { Text("Type in your language", style = FieldType.caption) },
             modifier = Modifier.fillMaxWidth(),
-            textStyle = FieldType.body.copy(color = OffWhite)
+            textStyle = FieldType.body.copy(color = Bone),
+            shape = RoundedCornerShape(8.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = SignalOrange,
+                unfocusedBorderColor = PanelBorder,
+                cursorColor = SignalOrange,
+                focusedContainerColor = PanelDeep,
+                unfocusedContainerColor = PanelDeep
+            )
         )
         Spacer(modifier = Modifier.height(10.dp))
-        Button(onClick = onTranslate, modifier = Modifier.fillMaxWidth()) {
-            Text("TRANSLATE")
-        }
-        if (casualtyTranslation.isNotBlank()) {
-            Spacer(modifier = Modifier.height(10.dp))
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(InkBlack)
-                    .padding(10.dp)
-            ) {
-                Text(text = casualtyTranslation, style = FieldType.body, color = OffWhite)
+        FieldButton(
+            text = "TRANSLATE",
+            onClick = onTranslate,
+            modifier = Modifier.fillMaxWidth()
+        )
+        AnimatedVisibility(
+            visible = casualtyTranslation.isNotBlank(),
+            enter = fadeIn(LodestarMotion.messageEnter) +
+                slideInVertically(
+                    animationSpec = LodestarMotion.messageEnter,
+                    initialOffsetY = { it / 4 }
+                )
+        ) {
+            Column {
+                Spacer(modifier = Modifier.height(10.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(PanelDeep)
+                        .padding(10.dp)
+                ) {
+                    Text(text = casualtyTranslation, style = FieldType.body, color = Bone)
+                }
             }
         }
     }
@@ -113,36 +129,48 @@ private fun SosCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(PanelDark)
+            .clip(RoundedCornerShape(8.dp))
+            .background(PanelMoss)
             .padding(14.dp)
     ) {
         Text(text = "SOS / DISTRESS SUMMARY", style = FieldType.statusLabel, color = CriticalRed)
         Spacer(modifier = Modifier.height(10.dp))
         Text(
-            text = "Drafts a short structured summary from your conversation so far -- " +
+            text = "Drafts a short structured summary from your conversation so far — " +
                 "meant to be read aloud or shown to a rescuer quickly.",
             style = FieldType.caption
         )
         Spacer(modifier = Modifier.height(10.dp))
-        Button(onClick = onGenerate, modifier = Modifier.fillMaxWidth()) {
-            Text("GENERATE SOS SUMMARY")
-        }
-        if (injury.isNotBlank()) {
-            Spacer(modifier = Modifier.height(10.dp))
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(InkBlack)
-                    .padding(10.dp)
-            ) {
-                Column {
-                    SosField("INJURY", injury)
-                    SosField("APPROX POSITION", position)
-                    SosField("PEOPLE AFFECTED", peopleAffected)
-                    SosField("IMMEDIATE NEEDS", needs)
-                    SosField("SEVERITY", severity)
+        FieldButton(
+            text = "GENERATE SOS SUMMARY",
+            onClick = onGenerate,
+            modifier = Modifier.fillMaxWidth(),
+            variant = FieldButtonVariant.ALERT
+        )
+        AnimatedVisibility(
+            visible = injury.isNotBlank(),
+            enter = fadeIn(LodestarMotion.messageEnter) +
+                slideInVertically(
+                    animationSpec = LodestarMotion.messageEnter,
+                    initialOffsetY = { it / 4 }
+                )
+        ) {
+            Column {
+                Spacer(modifier = Modifier.height(10.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(PanelDeep)
+                        .padding(10.dp)
+                ) {
+                    Column {
+                        SosField("INJURY", injury)
+                        SosField("APPROX POSITION", position)
+                        SosField("PEOPLE AFFECTED", peopleAffected)
+                        SosField("IMMEDIATE NEEDS", needs)
+                        SosField("SEVERITY", severity)
+                    }
                 }
             }
         }
@@ -153,6 +181,6 @@ private fun SosCard(
 private fun SosField(label: String, value: String) {
     Row(modifier = Modifier.padding(vertical = 2.dp)) {
         Text(text = "$label: ", style = FieldType.statusLabel, color = NeutralGray)
-        Text(text = value, style = FieldType.body, color = OffWhite)
+        Text(text = value, style = FieldType.body, color = Bone)
     }
 }
