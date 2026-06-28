@@ -95,9 +95,9 @@ private fun TranslationCard(
         )
         AnimatedVisibility(
             visible = casualtyTranslation.isNotBlank(),
-            enter = fadeIn(LodestarMotion.messageEnter) +
+            enter = fadeIn(LodestarMotion.messageFade) +
                 slideInVertically(
-                    animationSpec = LodestarMotion.messageEnter,
+                    animationSpec = LodestarMotion.messageSlide,
                     initialOffsetY = { it / 4 }
                 )
         ) {
@@ -149,9 +149,9 @@ private fun SosCard(
         )
         AnimatedVisibility(
             visible = injury.isNotBlank(),
-            enter = fadeIn(LodestarMotion.messageEnter) +
+            enter = fadeIn(LodestarMotion.messageFade) +
                 slideInVertically(
-                    animationSpec = LodestarMotion.messageEnter,
+                    animationSpec = LodestarMotion.messageSlide,
                     initialOffsetY = { it / 4 }
                 )
         ) {

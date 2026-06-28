@@ -17,6 +17,10 @@ python -m examples.qualcomm.scripts.deeplab_v3 \
   --compile_only \
   --download
 
+SRC_PTE="$EXECUTORCH_ROOT/deeplab_v3/dl3_qnn_q8.pte"
+if [[ ! -f "$SRC_PTE" ]]; then
+  SRC_PTE="$EXECUTORCH_ROOT/deeplab_v3/dlv3_qnn.pte"
+fi
 mkdir -p "$RUNTIME_DIR/models"
-cp -f "$EXECUTORCH_ROOT/deeplab_v3/dlv3_qnn.pte" "$RUNTIME_DIR/models/dlv3_qnn.pte"
-echo "==> Model copied to $RUNTIME_DIR/models/dlv3_qnn.pte"
+cp -f "$SRC_PTE" "$RUNTIME_DIR/models/dlv3_qnn.pte"
+echo "==> Model copied to $RUNTIME_DIR/models/dlv3_qnn.pte (from $(basename "$SRC_PTE"))"

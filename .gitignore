@@ -12,11 +12,14 @@ android/.gradle/
 android/build/
 android/app/build/
 android/local.properties
+android/app/libs/*.aar
+android/models/
 *.iml
 .idea/
 
 # Runtime secrets / artifacts
 runtime/.env
+runtime/scripts/.meta_url.env
 runtime/.venv/
 runtime/models/
 *.pte

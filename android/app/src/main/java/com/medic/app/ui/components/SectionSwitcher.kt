@@ -65,7 +65,7 @@ private fun SectionTab(
     )
     val verticalPad by animateDpAsState(
         targetValue = if (selected) 12.dp else 10.dp,
-        animationSpec = LodestarMotion.colorCrossfade,
+        animationSpec = LodestarMotion.dpCrossfade,
         label = "tab-pad-${section.name}"
     )
 

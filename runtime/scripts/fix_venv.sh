@@ -36,7 +36,7 @@ if [[ -f "$EXECUTORCH_ROOT/requirements-examples.txt" ]]; then
   pip install -r "$EXECUTORCH_ROOT/requirements-examples.txt" || true
 fi
 # Common export script deps
-pip install hydra-core omegaconf pyyaml pandas tabulate flatbuffers
+pip install hydra-core omegaconf pyyaml pandas tabulate flatbuffers pytorch_tokenizers 'torchao==0.15.0'
 
 echo "==> Updating runtime/.env ..."
 ENV_FILE="$RUNTIME_DIR/.env"

@@ -32,7 +32,23 @@ else
   export LD_LIBRARY_PATH="${QNN_SDK_ROOT}/lib/x86_64-linux-clang/:${LD_LIBRARY_PATH:-}"
 fi
 
+# QNN host export (x86 libQnnHtp.so) needs NDK LLVM libc++ / libc++abi
+NDK_LLVM_LIB="${ANDROID_NDK_ROOT}/toolchains/llvm/prebuilt/linux-x86_64/lib"
+LODESTAR_LIBS="${LODESTAR_LIBS:-$HOME/lodestar-libs}"
+if [[ -d "$NDK_LLVM_LIB" ]]; then
+  export LD_LIBRARY_PATH="${NDK_LLVM_LIB}:${LD_LIBRARY_PATH:-}"
+fi
+if [[ -f "$LODESTAR_LIBS/libunwind.so.1" ]]; then
+  export LD_LIBRARY_PATH="${LODESTAR_LIBS}:${LD_LIBRARY_PATH:-}"
+fi
+
 export PYTHONPATH="${EXECUTORCH_ROOT}:${EXECUTORCH_ROOT}/..:${PYTHONPATH}"
+
+# flatc (FlatBuffers compiler) — required for .pte export; built with x86 ExecuTorch
+FLATC_BIN="${EXECUTORCH_ROOT}/build-x86/third-party/flatc_ep/bin"
+if [[ -x "$FLATC_BIN/flatc" ]]; then
+  export PATH="$FLATC_BIN:$PATH"
+fi
 
 # Python venv — prefer native Linux path (see fix_venv.sh)
 VENV_DIR="${LODESTAR_VENV:-$HOME/lodestar-venv}"
@@ -53,7 +69,10 @@ fi
 
 # WSL2: use Windows adb server so USB devices work (WSL cannot see USB natively)
 if grep -qi microsoft /proc/version 2>/dev/null; then
-  WIN_HOST="$(grep nameserver /etc/resolv.conf 2>/dev/null | awk '{print $2}')"
+  WIN_HOST="$(ip route show default 2>/dev/null | awk '{print $3}')"
+  if [[ -z "$WIN_HOST" ]]; then
+    WIN_HOST="$(grep nameserver /etc/resolv.conf 2>/dev/null | awk '{print $2}')"
+  fi
   if [[ -n "$WIN_HOST" ]]; then
     export ADB_SERVER_SOCKET="tcp:${WIN_HOST}:5037"
   fi

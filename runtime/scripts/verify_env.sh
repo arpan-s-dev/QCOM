@@ -66,6 +66,22 @@ else
   echo "  OK  python PyYAML"
 fi
 
+if ! command -v flatc >/dev/null 2>&1; then
+  echo "  FAIL flatc not in PATH (needed for .pte export)" >&2
+  echo "        Fix: run build_executorch_x86.sh or add build-x86/third-party/flatc_ep/bin to PATH" >&2
+  ERR=1
+else
+  echo "  OK  flatc → $(command -v flatc)"
+fi
+
+if ! python -c "from ruamel.yaml import YAML" 2>/dev/null; then
+  echo "  FAIL python module 'ruamel.yaml' missing — ExecuTorch export needs it" >&2
+  echo "        Fix: pip install ruamel.yaml" >&2
+  ERR=1
+else
+  echo "  OK  python ruamel.yaml"
+fi
+
 if [[ "$ERR" -ne 0 ]]; then
   echo ""
   echo "Environment incomplete. Fix failures above before building." >&2

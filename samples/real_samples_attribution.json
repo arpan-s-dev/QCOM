@@ -1,0 +1,58 @@
+[
+  {
+    "filename": "demo_night_sf_treasure_island.jpg",
+    "wiki_title": "File:\"Celestial Crossing\" (8441037458).jpg",
+    "thumb_width": 2048,
+    "location": "Treasure Island, San Francisco Bay, California, USA",
+    "lat": 37.8147,
+    "lon": -122.371044,
+    "heading_deg": 47.0,
+    "message": "CC0 \u2014 Bay Bridge night sky (Orion/Canis Major), Treasure Island SF.",
+    "source_page": "https://commons.wikimedia.org/wiki/File:%22Celestial_Crossing%22_(8441037458).jpg",
+    "license": "CC0 1.0 (Flickr)",
+    "sha256": "36e045bc7d7c2cba97f159b3a819dd11aea8a65e1a8ba7157765b7bae41375ab",
+    "size_bytes": 491998
+  },
+  {
+    "filename": "demo_night_philippines_lapu_lapu.jpg",
+    "wiki_title": "File:Stars_in_the_sky_(Unsplash).jpg",
+    "thumb_width": 2048,
+    "location": "Basak, Lapu-Lapu City, Philippines",
+    "lat": 10.291024,
+    "lon": 123.961041,
+    "heading_deg": 88.0,
+    "message": "CC0 \u2014 Kyle Devaras, Lapu-Lapu Philippines star field.",
+    "source_page": "https://commons.wikimedia.org/wiki/File:Stars_in_the_sky_(Unsplash).jpg",
+    "license": "CC0 1.0",
+    "sha256": "4a6d1ffdae33240cbe11e4642177f9bcfc6b2fd4e99c356e65b30ae4d475c6f1",
+    "size_bytes": 3117873
+  },
+  {
+    "filename": "demo_night_death_valley_usa.jpg",
+    "wiki_title": "File:Amazing_Stars_(Unsplash).jpg",
+    "thumb_width": 2048,
+    "location": "Death Valley NP, Furnace Creek, California, USA",
+    "lat": 36.443648,
+    "lon": -116.807271,
+    "heading_deg": 12.0,
+    "message": "CC0 \u2014 Wilson Ye, Death Valley USA starry night.",
+    "source_page": "https://commons.wikimedia.org/wiki/File:Amazing_Stars_(Unsplash).jpg",
+    "license": "CC0 1.0",
+    "sha256": "835fccec287d6d8a802deb5c503100bc7cb1eb64f65ba96a265769a93db7135e",
+    "size_bytes": 2553788
+  },
+  {
+    "filename": "demo_night_erlangen_germany.jpg",
+    "wiki_title": "File:Night_Sky_@_Erlangen_-_B\u00fcchenbach_-_Am_Europakanal_-_Flickr_-_markus_spiske.jpg",
+    "thumb_width": 2048,
+    "location": "Erlangen, Bavaria, Germany",
+    "lat": 49.5833,
+    "lon": 11.0042,
+    "heading_deg": 215.0,
+    "message": "CC0 \u2014 Markus Spiske, Erlangen Germany night sky.",
+    "source_page": "https://commons.wikimedia.org/wiki/File:Night_Sky_@_Erlangen_-_B%C3%BCchenbach_-_Am_Europakanal_-_Flickr_-_markus_spiske.jpg",
+    "license": "CC0 1.0",
+    "sha256": "d4b004a1036d1a36ac572e5f2c46bb608e7488a2f7f77ad60943061163881c76",
+    "size_bytes": 14384767
+  }
+]

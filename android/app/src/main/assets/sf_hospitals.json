@@ -1,6 +1,6 @@
 {
-  "city": "San Francisco",
-  "note": "Offline reference list only. Distances are from your approximate last-known position, not live GPS.",
+  "city": "San Francisco Bay Area",
+  "note": "Offline reference list only (SF + South Bay / Peninsula). Distances are from your approximate last-known position, not live GPS.",
   "hospitals": [
     { "name": "UCSF Medical Center at Parnassus", "latitude": 37.7631, "longitude": -122.4586 },
     { "name": "Zuckerberg San Francisco General Hospital", "latitude": 37.7554, "longitude": -122.4045 },
@@ -19,6 +19,16 @@
     { "name": "UCSF Benioff Children's Hospital San Francisco", "latitude": 37.7649, "longitude": -122.4580 },
     { "name": "CPMC Pacific Campus", "latitude": 37.7895, "longitude": -122.4270 },
     { "name": "St. Luke's Campus — Dignity Health", "latitude": 37.7470, "longitude": -122.4205 },
-    { "name": "Langley Porter Psychiatric Hospital (UCSF)", "latitude": 37.7626, "longitude": -122.4578 }
+    { "name": "Langley Porter Psychiatric Hospital (UCSF)", "latitude": 37.7626, "longitude": -122.4578 },
+    { "name": "Santa Clara Valley Medical Center, San Jose", "latitude": 37.3127, "longitude": -121.9362 },
+    { "name": "Regional Medical Center of San Jose", "latitude": 37.3565, "longitude": -121.8285 },
+    { "name": "O'Connor Hospital, San Jose", "latitude": 37.3290, "longitude": -121.9430 },
+    { "name": "Good Samaritan Hospital, San Jose", "latitude": 37.2566, "longitude": -121.9520 },
+    { "name": "Kaiser Permanente San Jose Medical Center", "latitude": 37.2776, "longitude": -121.7960 },
+    { "name": "El Camino Health, Mountain View", "latitude": 37.3686, "longitude": -122.0506 },
+    { "name": "Stanford Health Care, Palo Alto", "latitude": 37.4348, "longitude": -122.1759 },
+    { "name": "Lucile Packard Children's Hospital, Palo Alto", "latitude": 37.4359, "longitude": -122.1762 },
+    { "name": "Washington Hospital, Fremont", "latitude": 37.5118, "longitude": -121.9710 },
+    { "name": "Sequoia Hospital, Redwood City", "latitude": 37.4719, "longitude": -122.2470 }
   ]
 }

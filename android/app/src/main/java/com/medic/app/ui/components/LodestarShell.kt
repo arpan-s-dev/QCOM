@@ -28,6 +28,7 @@ fun LodestarShell(
     onSend: () -> Unit,
     onMicToggle: () -> Unit,
     onOrientNavModeChange: (com.medic.app.ui.screens.OrientNavMode) -> Unit,
+    onUseMyLocation: () -> Unit,
     onSightSun: () -> Unit,
     onPickNightSkyImage: () -> Unit,
     onMedicTextChange: (String) -> Unit,
@@ -83,6 +84,13 @@ fun LodestarShell(
                     starNav = state.starNav,
                     onPickNightSkyImage = onPickNightSkyImage,
                     nearestHospitals = state.nearestHospitals,
+                    hasDeviceFix = state.hasDeviceFix,
+                    deviceLat = state.positionState.lastTrustedLat,
+                    deviceLon = state.positionState.lastTrustedLon,
+                    deviceFixAccuracyM = state.deviceFixAccuracyM,
+                    deviceFixProvider = state.deviceFixProvider,
+                    deviceFixAgeMs = state.deviceFixAgeMs,
+                    onUseMyLocation = onUseMyLocation,
                     onSightSun = onSightSun,
                     modifier = Modifier.fillMaxSize()
                 )

@@ -25,7 +25,20 @@ class StarNavigationPipeline(
         deviceAzimuthDeg: Double,
         utc: Instant = Instant.now()
     ): StarNavigationResult {
-        val detection = detector.detect(bitmap)
+        val detection = when (detector) {
+            is CvStarDetector -> detector.detect(bitmap)
+            else -> {
+                val w = bitmap.width
+                val h = bitmap.height
+                val gray = IntArray(w * h) { i ->
+                    val p = bitmap.getPixel(i % w, i / w)
+                    ((android.graphics.Color.red(p) * 0.299) +
+                        (android.graphics.Color.green(p) * 0.587) +
+                        (android.graphics.Color.blue(p) * 0.114)).toInt()
+                }
+                detector.detect(gray, w, h)
+            }
+        }
         val solveContext = StarSolveContext(
             detection = detection,
             imageFileName = imageFileName,

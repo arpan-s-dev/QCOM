@@ -1,12 +1,15 @@
 package com.medic.app.ui
 
 import android.app.Application
+import android.graphics.Bitmap
 import android.net.Uri
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.medic.app.ai.AiService
+import com.medic.app.ai.AiServiceFactory
 import com.medic.app.ai.PromptTemplates
-import com.medic.app.ai.StubAiService
 import com.medic.app.ai.TriageOrchestrator
 import com.medic.app.ai.VoiceLoopManager
 import com.medic.app.data.CorpusChunk
@@ -54,6 +57,14 @@ data class AppUiState(
         lastTrustedLon = -122.4194
     ),
     val nearestHospitals: List<HospitalWithBearing> = emptyList(),
+
+    // Device position fix backing the nearest-hospital ranking. Until a real
+    // fix arrives, the app falls back to a cached approximate position.
+    val hasDeviceFix: Boolean = false,
+    val deviceFixAccuracyM: Float? = null,
+    val deviceFixProvider: String? = null,
+    val deviceFixAgeMs: Long? = null,
+
     val fieldKitDisclaimer: String = "",
     val fieldKitItems: List<FieldKitItem> = emptyList(),
 
@@ -62,7 +73,13 @@ data class AppUiState(
     val sunAzimuthDeg: Double? = null,
     val sunElevationDeg: Double? = null,
     val correctedHeadingDeg: Double? = null,
+    val liveHeadingDeg: Double? = null,
     val starNav: StarNavUiState = StarNavUiState(),
+
+    // Medical wound-photo analysis
+    val woundImage: ImageBitmap? = null,
+    val woundAnalyzing: Boolean = false,
+    val woundAssessment: String? = null,
 
     // COMMUNICATE screen state
     val medicText: String = "",
@@ -77,7 +94,7 @@ data class AppUiState(
  */
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val aiService: AiService = StubAiService()  // <-- swap to RealAiService() when ready
+    private val aiService: AiService = AiServiceFactory.create(application, viewModelScope)
     private val corpus: List<CorpusChunk> = emptyList()  // <-- populate from bundled corpus + vectors asset at startup
     private val orchestrator = TriageOrchestrator(aiService, corpus)
     private val voiceLoop = VoiceLoopManager(application)
@@ -195,15 +212,30 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         )
     }
 
-    /** Called once a real LocationManager fix (or last-trusted DR fix) is available. */
-    fun updateRoughLocation(lat: Double, lon: Double) {
+    /**
+     * Called once a real LocationManager fix (or last-trusted DR fix) is
+     * available. A device fix is treated as GPS_TRUSTED — it's a real
+     * receiver reading, even if cached from before the network went down.
+     */
+    fun updateRoughLocation(
+        lat: Double,
+        lon: Double,
+        accuracyMeters: Float? = null,
+        provider: String? = null,
+        ageMillis: Long? = null
+    ) {
         roughLat = lat
         roughLon = lon
         _uiState.value = _uiState.value.copy(
             positionState = _uiState.value.positionState.copy(
+                source = PositionSource.GPS_TRUSTED,
                 lastTrustedLat = lat,
                 lastTrustedLon = lon
-            )
+            ),
+            hasDeviceFix = true,
+            deviceFixAccuracyM = accuracyMeters,
+            deviceFixProvider = provider,
+            deviceFixAgeMs = ageMillis
         )
         refreshSunPosition()
         refreshNearestHospitals()
@@ -212,6 +244,52 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun onOrientNavModeChange(mode: OrientNavMode) {
         _uiState.value = _uiState.value.copy(orientNavMode = mode)
     }
+
+    /**
+     * Live magnetometer heading for the compass dial. Polled from the Activity;
+     * skips no-op updates (same whole degree) so a still phone doesn't churn
+     * recomposition.
+     */
+    fun updateLiveHeading(deg: Double) {
+        if (_uiState.value.liveHeadingDeg?.toInt() == deg.toInt()) return
+        _uiState.value = _uiState.value.copy(liveHeadingDeg = deg)
+    }
+
+    /**
+     * User added a wound photo. Loads + downscales the image and attaches a
+     * reference infection-check. The on-device vision model isn't wired yet, so
+     * the assessment is an honest guided checklist, never a diagnosis.
+     */
+    fun onMedicalImageSelected(uri: Uri) {
+        _uiState.value = _uiState.value.copy(woundAnalyzing = true, woundAssessment = null, woundImage = null)
+        val app = getApplication<Application>()
+        viewModelScope.launch {
+            val bitmap = withContext(Dispatchers.IO) {
+                StarNavigationPipeline.loadBitmap(app, uri)?.let { downscale(it, 1080) }
+            }
+            _uiState.value = _uiState.value.copy(
+                woundImage = bitmap?.asImageBitmap(),
+                woundAnalyzing = false,
+                woundAssessment = woundCheckReference()
+            )
+        }
+    }
+
+    private fun downscale(bmp: Bitmap, maxDim: Int): Bitmap {
+        val longest = maxOf(bmp.width, bmp.height)
+        if (longest <= maxDim) return bmp
+        val scale = maxDim.toFloat() / longest
+        return Bitmap.createScaledBitmap(bmp, (bmp.width * scale).toInt(), (bmp.height * scale).toInt(), true)
+    }
+
+    private fun woundCheckReference(): String =
+        "Photo added. On-device image analysis isn't wired to the vision model yet, " +
+            "so this is a guided self-check — not a diagnosis.\n\n" +
+            "Injury: note depth, active bleeding, and whether the edges gape open.\n\n" +
+            "Infection signs to look for: spreading redness around the wound, swelling, " +
+            "warmth, pus or cloudy fluid, a bad smell, increasing pain, or fever.\n\n" +
+            "If two or more infection signs are present, treat it as a likely infection " +
+            "and get to care as soon as you can."
 
     /**
      * User has physically pointed the phone's top edge at the sun and tapped

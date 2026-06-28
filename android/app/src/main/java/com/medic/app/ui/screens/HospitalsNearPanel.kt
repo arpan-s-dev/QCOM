@@ -2,8 +2,6 @@ package com.medic.app.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,12 +15,21 @@ import com.medic.app.data.HospitalWithBearing
 import com.medic.app.ui.theme.*
 
 /**
- * Offline SF hospital list ranked by great-circle distance from an approximate fix.
- * Framed as guidance only — not live routing or "THE nearest."
+ * Nearest-hospital guidance from an approximate fix. Leads with one clear
+ * destination — name, distance, and a plain cardinal direction to walk —
+ * then lists the next two. Distances are straight-line estimates from an
+ * offline list, not turn-by-turn routing.
  */
 @Composable
 fun HospitalsNearPanel(
     nearestHospitals: List<HospitalWithBearing>,
+    hasDeviceFix: Boolean,
+    deviceLat: Double?,
+    deviceLon: Double?,
+    accuracyMeters: Float?,
+    provider: String?,
+    fixAgeMs: Long?,
+    onUseMyLocation: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -33,28 +40,88 @@ fun HospitalsNearPanel(
             .padding(14.dp)
     ) {
         Text(
-            text = "Hospitals near your approximate area",
+            text = "NEAREST HOSPITAL",
             style = FieldType.statusLabel,
             color = SignalOrange
         )
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = "Position is approximate (GPS denied). Distances are straight-line estimates — not turn-by-turn routing.",
+            text = positionLine(hasDeviceFix, deviceLat, deviceLon, accuracyMeters, provider, fixAgeMs),
             style = FieldType.caption,
-            color = NeutralGray
+            color = if (hasDeviceFix) Bone else SeriousAmber
         )
-        Spacer(modifier = Modifier.height(12.dp))
 
-        if (nearestHospitals.isEmpty()) {
+        Spacer(modifier = Modifier.height(10.dp))
+        FieldButton(
+            text = if (hasDeviceFix) "UPDATE MY LOCATION" else "USE MY LOCATION",
+            onClick = onUseMyLocation,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        val top = nearestHospitals.firstOrNull()
+        if (top == null) {
             Text(
-                text = "No cached position yet. A last-known GPS fix is needed before hospital distances can be estimated.",
+                text = "No position yet. Tap USE MY LOCATION, or allow location access, to estimate the nearest hospital.",
                 style = FieldType.body,
                 color = Bone
             )
         } else {
-            nearestHospitals.forEachIndexed { index, entry ->
-                if (index > 0) Spacer(modifier = Modifier.height(10.dp))
-                HospitalRow(entry)
+            NearestHero(top)
+            val rest = nearestHospitals.drop(1)
+            if (rest.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(text = "Other hospitals nearby", style = FieldType.caption, color = NeutralGray)
+                rest.forEach { entry ->
+                    Spacer(modifier = Modifier.height(8.dp))
+                    HospitalRow(entry)
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(
+            text = "Straight-line estimate from an offline list — not turn-by-turn routing.",
+            style = FieldType.caption,
+            color = NeutralGray
+        )
+    }
+}
+
+@Composable
+private fun NearestHero(entry: HospitalWithBearing) {
+    val cardinal = GeoMath.bearingToCardinal(entry.bearingDegrees)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(PanelDeep)
+            .padding(14.dp)
+    ) {
+        Text(text = entry.hospital.name, style = FieldType.statusValue, color = Bone)
+        Spacer(modifier = Modifier.height(10.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "➤",
+                style = FieldType.heading,
+                color = SignalOrange,
+                modifier = Modifier.width(34.dp),
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Column {
+                Text(
+                    text = "HEAD ${cardinalWords(cardinal)}",
+                    style = FieldType.heading,
+                    color = SignalOrange
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "%.1f km · %d° true".format(entry.distanceKm, entry.bearingDegrees.toInt()),
+                    style = FieldType.body,
+                    color = Bone
+                )
             }
         }
     }
@@ -73,7 +140,7 @@ private fun HospitalRow(entry: HospitalWithBearing) {
     ) {
         Text(
             text = "➤",
-            style = FieldType.heading,
+            style = FieldType.body,
             color = SignalOrange,
             modifier = Modifier.width(28.dp),
             textAlign = TextAlign.Center
@@ -88,5 +155,45 @@ private fun HospitalRow(entry: HospitalWithBearing) {
                 color = NeutralGray
             )
         }
+    }
+}
+
+private fun cardinalWords(cardinal: String): String = when (cardinal) {
+    "N" -> "NORTH"
+    "NE" -> "NORTH-EAST"
+    "E" -> "EAST"
+    "SE" -> "SOUTH-EAST"
+    "S" -> "SOUTH"
+    "SW" -> "SOUTH-WEST"
+    "W" -> "WEST"
+    "NW" -> "NORTH-WEST"
+    else -> cardinal
+}
+
+private fun positionLine(
+    hasDeviceFix: Boolean,
+    lat: Double?,
+    lon: Double?,
+    accuracyMeters: Float?,
+    provider: String?,
+    fixAgeMs: Long?
+): String {
+    if (!hasDeviceFix || lat == null || lon == null) {
+        return "Using a cached approximate position. Tap below to estimate your real location from the GPS receiver."
+    }
+    val coords = "%.4f, %.4f".format(lat, lon)
+    val acc = accuracyMeters?.let { " ±${it.toInt()} m" } ?: ""
+    val src = provider?.let { " · ${it.uppercase()}" } ?: ""
+    val age = ageLabel(fixAgeMs)
+    return "Your position ~$coords$acc$src$age"
+}
+
+private fun ageLabel(fixAgeMs: Long?): String {
+    if (fixAgeMs == null) return ""
+    val minutes = fixAgeMs / 60_000
+    return when {
+        minutes < 1 -> " · live"
+        minutes < 60 -> " · ${minutes}m old (cached)"
+        else -> " · ${minutes / 60}h old (cached)"
     }
 }

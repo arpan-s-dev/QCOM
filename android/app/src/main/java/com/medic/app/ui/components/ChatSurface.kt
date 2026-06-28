@@ -75,12 +75,11 @@ private fun AnimatedMessageBubble(msg: ChatMessage) {
 
     AnimatedVisibility(
         visible = visible,
-        enter = fadeIn(LodestarMotion.messageEnter) +
+        enter = fadeIn(LodestarMotion.messageFade) +
             slideInVertically(
-                animationSpec = LodestarMotion.messageEnter,
+                animationSpec = LodestarMotion.messageSlide,
                 initialOffsetY = { it / 3 }
-            ),
-        modifier = Modifier.animateItem()
+            )
     ) {
         MessageBubble(msg)
     }

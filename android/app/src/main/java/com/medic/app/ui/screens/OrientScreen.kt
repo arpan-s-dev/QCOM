@@ -42,6 +42,13 @@ fun OrientScreen(
     starNav: StarNavUiState,
     onPickNightSkyImage: () -> Unit,
     nearestHospitals: List<HospitalWithBearing>,
+    hasDeviceFix: Boolean,
+    deviceLat: Double?,
+    deviceLon: Double?,
+    deviceFixAccuracyM: Float?,
+    deviceFixProvider: String?,
+    deviceFixAgeMs: Long?,
+    onUseMyLocation: () -> Unit,
     onSightSun: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -62,19 +69,41 @@ fun OrientScreen(
             modifier = Modifier.padding(bottom = 12.dp)
         )
 
+        // Primary task: where am I → nearest hospital → which way to walk.
+        HospitalsNearPanel(
+            nearestHospitals = nearestHospitals,
+            hasDeviceFix = hasDeviceFix,
+            deviceLat = deviceLat,
+            deviceLon = deviceLon,
+            accuracyMeters = deviceFixAccuracyM,
+            provider = deviceFixProvider,
+            fixAgeMs = deviceFixAgeMs,
+            onUseMyLocation = onUseMyLocation
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        CompassRing(
+            headingDeg = correctedHeadingDeg ?: 0.0,
+            sunAzimuthDeg = if (orientNavMode == OrientNavMode.SOLAR) sunAzimuthDeg else null,
+            targetBearingDeg = nearestHospitals.firstOrNull()?.bearingDegrees
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            text = "Orange marker points to the nearest hospital. Turn the phone until the brass needle lines up, then walk that way.",
+            style = FieldType.caption,
+            color = NeutralGray,
+            modifier = Modifier.padding(horizontal = 8.dp)
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
         OrientModeSwitcher(
             mode = orientNavMode,
             onModeChange = onOrientNavModeChange
         )
 
         Spacer(modifier = Modifier.height(16.dp))
-
-        CompassRing(
-            headingDeg = correctedHeadingDeg ?: 0.0,
-            sunAzimuthDeg = if (orientNavMode == OrientNavMode.SOLAR) sunAzimuthDeg else null
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
 
         when (orientNavMode) {
             OrientNavMode.SOLAR -> SolarOrientPanel(
@@ -89,8 +118,6 @@ fun OrientScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
-        HospitalsNearPanel(nearestHospitals = nearestHospitals)
         Spacer(modifier = Modifier.height(24.dp))
     }
 }
