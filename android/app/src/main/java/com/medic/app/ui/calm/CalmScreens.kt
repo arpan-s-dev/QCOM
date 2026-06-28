@@ -239,6 +239,9 @@ fun FindNorthScreen(
 ) {
     val night = state.orientNavMode == OrientNavMode.NIGHT_SKY
     val spoofed = state.positionState.spoofDetected
+    val heading = displayHeading(state)
+    val headingSource = headingSourceLabel(state)
+    val targetBearing = state.nearestHospitals.firstOrNull()?.bearingDegrees
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -286,11 +289,11 @@ fun FindNorthScreen(
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                val heading = state.liveHeadingDeg ?: state.correctedHeadingDeg
                 CompassRing(
                     headingDeg = heading ?: 0.0,
                     sunAzimuthDeg = if (!night) state.sunAzimuthDeg else null,
-                    targetBearingDeg = state.nearestHospitals.firstOrNull()?.bearingDegrees
+                    targetBearingDeg = targetBearing,
+                    spoofed = spoofed
                 )
                 Spacer(Modifier.height(14.dp))
                 Text(
@@ -303,6 +306,12 @@ fun FindNorthScreen(
                     text = if (night) "Import a night-sky photo to read true north"
                     else "Hold the phone flat and turn slowly",
                     color = if (night) Color(0xFF85B7EB) else SgTextSecondary, fontSize = 13.sp
+                )
+                Spacer(Modifier.height(12.dp))
+                CompassStatusRow(
+                    headingSource = headingSource,
+                    targetBearingDeg = targetBearing,
+                    spoofed = spoofed
                 )
             }
         }
@@ -346,6 +355,40 @@ fun FindNorthScreen(
         Spacer(Modifier.height(18.dp))
         DemoSpoofControl(spoofed = spoofed, onSetSpoof = onSetSpoof)
         Spacer(Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun CompassStatusRow(
+    headingSource: String,
+    targetBearingDeg: Double?,
+    spoofed: Boolean
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        CompassInfoChip(
+            title = if (spoofed) "Compass feed" else "Heading source",
+            value = headingSource,
+            modifier = Modifier.weight(1f)
+        )
+        CompassInfoChip(
+            title = "Hospital bearing",
+            value = targetBearingDeg?.let { "${it.roundToInt()}° ${GeoMath.bearingToCardinal(it)}" } ?: "Waiting for fix",
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun CompassInfoChip(title: String, value: String, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(SgRaised)
+            .padding(horizontal = 12.dp, vertical = 10.dp)
+    ) {
+        Text(title, color = SgTextMuted, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+        Spacer(Modifier.height(4.dp))
+        Text(value, color = SgText, fontSize = 13.sp, lineHeight = 18.sp)
     }
 }
 
@@ -763,4 +806,19 @@ private fun positionLine(state: AppUiState): String {
     val coords = if (lat != null && lon != null) "%.4f, %.4f".format(lat, lon) else "located"
     val acc = state.deviceFixAccuracyM?.let { " ±${it.roundToInt()} m" } ?: ""
     return "Your position ~$coords$acc"
+}
+
+private fun displayHeading(state: AppUiState): Double? = when {
+    state.positionState.spoofDetected -> state.liveHeadingDeg
+    state.positionState.source == PositionSource.SOLAR_FIX ||
+        state.positionState.source == PositionSource.STAR_FIX ->
+        state.correctedHeadingDeg ?: state.liveHeadingDeg
+    else -> state.liveHeadingDeg ?: state.correctedHeadingDeg
+}
+
+private fun headingSourceLabel(state: AppUiState): String = when {
+    state.positionState.spoofDetected -> "Spoofed demo feed"
+    state.positionState.source == PositionSource.SOLAR_FIX -> "Sun-corrected heading"
+    state.positionState.source == PositionSource.STAR_FIX -> "Star-corrected heading"
+    else -> "Live sensor heading"
 }

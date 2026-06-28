@@ -15,3 +15,4 @@
 2026-06-28 14:00 | SHIP | docs | README team names, 5-min DEMO script, live-vs-roadmap pitch slide, PR_BODY.md, STATUS gate sync
 2026-06-28 14:15 | SHIP | docs | STATUS: APP-UI IN_PROGRESS; pitch/DEMO/PR note UI animations landing
 2026-06-28 13:05 | Copilot/APP-UI | android | Add demo GPS spoof toggle and fallback banner to the location tab
+2026-06-28 13:35 | Copilot/APP-UI | android | Make spoof mode distort the live compass heading and clean up the location compass UI/status cards

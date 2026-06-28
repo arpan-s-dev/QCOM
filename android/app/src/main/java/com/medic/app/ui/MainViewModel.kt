@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.UUID
+import kotlin.math.sin
 
 data class SosSummary(
     val injury: String = "",
@@ -44,6 +45,18 @@ data class SosSummary(
     val needs: String = "",
     val severity: String = ""
 )
+
+internal object DemoCompassSpoof {
+    private const val BASE_OFFSET_DEG = 72.0
+    private const val DRIFT_AMPLITUDE_DEG = 11.0
+
+    fun distortedHeading(rawHeadingDeg: Double, tick: Int, offsetDeg: Double = BASE_OFFSET_DEG): Double {
+        val driftDeg = sin(tick / 8.0) * DRIFT_AMPLITUDE_DEG
+        return normalizeHeading(rawHeadingDeg + offsetDeg + driftDeg)
+    }
+}
+
+private fun normalizeHeading(deg: Double): Double = ((deg % 360.0) + 360.0) % 360.0
 
 data class AppUiState(
     val section: AppSection = AppSection.TREAT,
@@ -102,6 +115,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // Cached last-known fix (simulates pre-jam GPS) refined by heading/DR elsewhere.
     private var roughLat: Double = 37.7749
     private var roughLon: Double = -122.4194
+    private var lastRawHeadingDeg: Double = 0.0
+    private var demoSpoofOffsetDeg: Double? = null
+    private var demoSpoofTick: Int = 0
     private val hospitals: List<Hospital> = OfflineAssetLoader.loadHospitals(application)
     private val solarCompass get() = SolarCompass(roughLat, roughLon)
     private val starNavigationPipeline by lazy { StarNavigationPipeline(application) }
@@ -251,8 +267,35 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * recomposition.
      */
     fun updateLiveHeading(deg: Double) {
-        if (_uiState.value.liveHeadingDeg?.toInt() == deg.toInt()) return
-        _uiState.value = _uiState.value.copy(liveHeadingDeg = deg)
+        lastRawHeadingDeg = normalizeHeading(deg)
+        val current = _uiState.value
+        val displayHeading = if (current.positionState.spoofDetected) {
+            demoSpoofTick += 1
+            DemoCompassSpoof.distortedHeading(
+                rawHeadingDeg = lastRawHeadingDeg,
+                tick = demoSpoofTick,
+                offsetDeg = demoSpoofOffsetDeg ?: 72.0
+            )
+        } else {
+            lastRawHeadingDeg
+        }
+        val nextPositionState = when (current.positionState.source) {
+            PositionSource.GPS_TRUSTED,
+            PositionSource.DEAD_RECKONING -> current.positionState.copy(
+                headingDegrees = displayHeading.toFloat()
+            )
+
+            PositionSource.SOLAR_FIX,
+            PositionSource.STAR_FIX -> current.positionState
+        }
+        if (
+            current.liveHeadingDeg?.toInt() == displayHeading.toInt() &&
+            current.positionState.headingDegrees?.toInt() == nextPositionState.headingDegrees?.toInt()
+        ) return
+        _uiState.value = current.copy(
+            liveHeadingDeg = displayHeading,
+            positionState = nextPositionState
+        )
     }
 
     /**
@@ -260,7 +303,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * the dead-reckoning fallback path without needing external mock tooling.
      */
     fun setSpoofDemo(spoofed: Boolean) {
+        if (spoofed) {
+            demoSpoofOffsetDeg = 72.0
+            demoSpoofTick = 0
+        } else {
+            demoSpoofOffsetDeg = null
+            demoSpoofTick = 0
+        }
         updatePositionState(gpsAvailable = true, gpsSpoofed = spoofed)
+        updateLiveHeading(lastRawHeadingDeg)
     }
 
     /**
@@ -460,6 +511,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun updatePositionState(gpsAvailable: Boolean, gpsSpoofed: Boolean) {
         val current = _uiState.value.positionState
         val next = PositionStateMachine.transition(current, gpsAvailable, gpsSpoofed)
+        if (!next.spoofDetected) {
+            demoSpoofOffsetDeg = null
+            demoSpoofTick = 0
+        }
         _uiState.value = _uiState.value.copy(positionState = next)
         refreshNearestHospitals()
     }

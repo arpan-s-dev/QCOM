@@ -32,6 +32,7 @@ fun CompassRing(
     headingDeg: Double,
     sunAzimuthDeg: Double? = null,
     targetBearingDeg: Double? = null,
+    spoofed: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Canvas(modifier = modifier.size(220.dp)) {
@@ -45,7 +46,14 @@ fun CompassRing(
             return Offset(center.x + r * cos(rad).toFloat(), center.y + r * sin(rad).toFloat())
         }
 
-        drawCircle(color = PanelBorder, radius = radius, center = center, style = Stroke(width = 2.5f))
+        drawCircle(color = PanelDeep.copy(alpha = 0.35f), radius = radius, center = center)
+        drawCircle(
+            color = if (spoofed) CriticalRed.copy(alpha = 0.32f) else PanelBorder,
+            radius = radius,
+            center = center,
+            style = Stroke(width = if (spoofed) 4f else 2.5f)
+        )
+        drawCircle(color = PanelBorder.copy(alpha = 0.5f), radius = radius - 18, center = center, style = Stroke(width = 1.2f))
 
         // Minor ticks every 30°.
         for (b in 0 until 360 step 30) {
@@ -91,16 +99,16 @@ fun CompassRing(
         drawCircle(PanelDeep, 3f, center)
 
         // Fixed index at the top = the direction the phone is pointing.
-        drawHeadingIndex(center, radius)
+        drawHeadingIndex(center, radius, if (spoofed) CriticalRed else Bone)
     }
 }
 
-private fun DrawScope.drawHeadingIndex(center: Offset, radius: Float) {
+private fun DrawScope.drawHeadingIndex(center: Offset, radius: Float, color: androidx.compose.ui.graphics.Color) {
     val path = Path().apply {
         moveTo(center.x - 11f, center.y - radius - 4f)
         lineTo(center.x + 11f, center.y - radius - 4f)
         lineTo(center.x, center.y - radius + 14f)
         close()
     }
-    drawPath(path, Bone)
+    drawPath(path, color)
 }
