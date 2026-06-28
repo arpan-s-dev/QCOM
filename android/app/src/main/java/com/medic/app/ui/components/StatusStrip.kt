@@ -50,11 +50,13 @@ private fun PositionSourcePill(
         PositionSource.GPS_TRUSTED -> GpsTrustedGreen
         PositionSource.DEAD_RECKONING -> DeadReckoningAmber
         PositionSource.SOLAR_FIX -> SolarFixBlue
+        PositionSource.STAR_FIX -> StarFixViolet
     }
     val label = when (source) {
         PositionSource.GPS_TRUSTED -> "GPS_TRUSTED"
         PositionSource.DEAD_RECKONING -> "DEAD_RECKONING"
         PositionSource.SOLAR_FIX -> "SOLAR_FIX"
+        PositionSource.STAR_FIX -> "STAR_FIX"
     }
 
     val color by animateColorAsState(
@@ -80,7 +82,10 @@ private fun PositionSourcePill(
                     style = FieldType.caption,
                     color = CriticalRed
                 )
-            } else if (source == PositionSource.SOLAR_FIX && headingDegrees != null) {
+            } else if (
+                (source == PositionSource.SOLAR_FIX || source == PositionSource.STAR_FIX) &&
+                headingDegrees != null
+            ) {
                 Text(text = "heading ${headingDegrees.toInt()}°", style = FieldType.caption)
             }
         }

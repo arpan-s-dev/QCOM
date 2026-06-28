@@ -5,12 +5,14 @@ package com.medic.app.nav
  * the app always prefers GPS_TRUSTED, falls back to DEAD_RECKONING when GPS
  * is unavailable or flagged as spoofed, and falls back further to
  * SOLAR_FIX (heading only, no absolute position) when DR has drifted too
- * long without a GPS/landmark correction to bound its error.
+ * long without a GPS/landmark correction to bound its error. STAR_FIX is
+ * the night-time counterpart — heading from star-field plate solve.
  */
 enum class PositionSource {
     GPS_TRUSTED,
     DEAD_RECKONING,
-    SOLAR_FIX
+    SOLAR_FIX,
+    STAR_FIX
 }
 
 data class PositionState(

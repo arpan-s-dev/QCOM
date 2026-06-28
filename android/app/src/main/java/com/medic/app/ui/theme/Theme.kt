@@ -43,6 +43,7 @@ val NeutralGray = Color(0xFF9A9A8E)
 val GpsTrustedGreen = Color(0xFF6BA87A)
 val DeadReckoningAmber = Color(0xFFE0962F)
 val SolarFixBlue = Color(0xFF6B9FD4)
+val StarFixViolet = Color(0xFF9B8FD4)
 
 // Signature accent — brass compass needle on forest field
 val CompassBrass = Color(0xFFC4A35A)

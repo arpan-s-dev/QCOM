@@ -24,6 +24,11 @@ class DeviceOrientationReader(context: Context) {
     var currentBearingDeg: Double = 0.0
         private set
 
+    /** Device pitch in degrees — used with accelerometer/rotation vector for star solve. */
+    @Volatile
+    var currentPitchDeg: Double = 0.0
+        private set
+
     private val listener = object : SensorEventListener {
         override fun onSensorChanged(event: SensorEvent) {
             val rotationMatrix = FloatArray(9)
@@ -33,6 +38,7 @@ class DeviceOrientationReader(context: Context) {
             // orientation[0] is azimuth in radians, -pi..pi, 0 = magnetic north
             val degrees = Math.toDegrees(orientation[0].toDouble())
             currentBearingDeg = (degrees + 360.0) % 360.0
+            currentPitchDeg = Math.toDegrees(orientation[1].toDouble())
         }
 
         override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) { /* no-op */ }

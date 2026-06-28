@@ -1,6 +1,7 @@
 package com.medic.app.ui
 
 import android.app.Application
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.medic.app.ai.AiService
@@ -18,14 +19,19 @@ import com.medic.app.nav.PositionSource
 import com.medic.app.nav.PositionState
 import com.medic.app.nav.PositionStateMachine
 import com.medic.app.nav.SolarCompass
+import com.medic.app.nav.star.StarNavigationPipeline
 import com.medic.app.ui.components.AppSection
 import com.medic.app.ui.components.ChatMessage
 import com.medic.app.ui.components.Sender
+import com.medic.app.ui.screens.OrientNavMode
+import com.medic.app.ui.screens.StarNavUiState
 import com.medic.app.ui.screens.TreatSubMode
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.UUID
 
 data class SosSummary(
@@ -52,9 +58,11 @@ data class AppUiState(
     val fieldKitItems: List<FieldKitItem> = emptyList(),
 
     // ORIENT screen state
+    val orientNavMode: OrientNavMode = OrientNavMode.SOLAR,
     val sunAzimuthDeg: Double? = null,
     val sunElevationDeg: Double? = null,
     val correctedHeadingDeg: Double? = null,
+    val starNav: StarNavUiState = StarNavUiState(),
 
     // COMMUNICATE screen state
     val medicText: String = "",
@@ -79,6 +87,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var roughLon: Double = -122.4194
     private val hospitals: List<Hospital> = OfflineAssetLoader.loadHospitals(application)
     private val solarCompass get() = SolarCompass(roughLat, roughLon)
+    private val starNavigationPipeline by lazy { StarNavigationPipeline(application) }
 
     private val _uiState = MutableStateFlow(AppUiState())
     val uiState: StateFlow<AppUiState> = _uiState.asStateFlow()
@@ -200,6 +209,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         refreshNearestHospitals()
     }
 
+    fun onOrientNavModeChange(mode: OrientNavMode) {
+        _uiState.value = _uiState.value.copy(orientNavMode = mode)
+    }
+
     /**
      * User has physically pointed the phone's top edge at the sun and tapped
      * "SIGHT SUN." [rawDeviceBearing] is whatever the magnetometer/rotation
@@ -209,7 +222,87 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun onSightSun(rawDeviceBearing: Double) {
         val correction = solarCompass.computeMagnetometerCorrection(rawDeviceBearing)
         val corrected = solarCompass.trueHeading(rawDeviceBearing, correction)
-        _uiState.value = _uiState.value.copy(correctedHeadingDeg = corrected)
+        applyCelestialHeading(corrected, PositionSource.SOLAR_FIX)
+    }
+
+    /**
+     * User imported a night-sky photo. Runs star detection + plate solve on a
+     * background thread; updates heading via the same pipeline as solar compass.
+     */
+    fun onNightSkyImageSelected(
+        uri: Uri,
+        deviceAzimuthDeg: Double,
+        devicePitchDeg: Double
+    ) {
+        val app = getApplication<Application>()
+        _uiState.value = _uiState.value.copy(
+            orientNavMode = OrientNavMode.NIGHT_SKY,
+            starNav = StarNavUiState(processing = true, message = "Loading image…")
+        )
+
+        viewModelScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                val bitmap = StarNavigationPipeline.loadBitmap(app, uri)
+                    ?: return@withContext null
+                try {
+                    val fileName = StarNavigationPipeline.fileNameFromUri(app, uri)
+                    val hash = StarNavigationPipeline.hashUri(app, uri)
+                    starNavigationPipeline.process(
+                        bitmap = bitmap,
+                        imageFileName = fileName,
+                        contentHashHex = hash,
+                        devicePitchDeg = devicePitchDeg,
+                        deviceAzimuthDeg = deviceAzimuthDeg
+                    )
+                } finally {
+                    bitmap.recycle()
+                }
+            }
+
+            if (result == null) {
+                _uiState.value = _uiState.value.copy(
+                    starNav = StarNavUiState(
+                        processing = false,
+                        message = "Could not read the selected image."
+                    )
+                )
+                return@launch
+            }
+
+            val solve = result.solve
+            if (solve.success && solve.trueNorthHeadingDeg != null) {
+                applyCelestialHeading(solve.trueNorthHeadingDeg, PositionSource.STAR_FIX)
+                _uiState.value = _uiState.value.copy(
+                    starNav = StarNavUiState(
+                        processing = false,
+                        detectedStars = result.detection.stars.size,
+                        message = solve.message,
+                        approximateLat = solve.approximateLatDeg,
+                        latUncertainty = solve.latUncertaintyDeg,
+                        solverKind = solve.solverKind
+                    )
+                )
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    starNav = StarNavUiState(
+                        processing = false,
+                        detectedStars = result.detection.stars.size,
+                        message = solve.message,
+                        solverKind = solve.solverKind
+                    )
+                )
+            }
+        }
+    }
+
+    private fun applyCelestialHeading(corrected: Double, source: PositionSource) {
+        _uiState.value = _uiState.value.copy(
+            correctedHeadingDeg = corrected,
+            positionState = _uiState.value.positionState.copy(
+                source = source,
+                headingDegrees = corrected.toFloat()
+            )
+        )
     }
 
     // --- COMMUNICATE screen wiring ---

@@ -19,6 +19,7 @@
 - [x] **P2.6** `SolarCompass.kt` + AR overlay composable
 - [x] **P2.7** GPS spoof detection + mock-location demo steps in DEMO.md
 - [x] **P2.8** `PositionSource` state machine wired to status strip
+- [x] **P2.8b** Night-sky star navigation: image import, `CvStarDetector`, `StarSolver`, Yale catalog, ORIENT Solar/Night modes
 
 ## Phase 3 — Bonus + Pitch
 - [x] **P2.9** Translation screen

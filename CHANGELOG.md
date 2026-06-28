@@ -7,3 +7,4 @@
 2026-06-28 01:30 | Cursor/P1 | runtime | P1.0a IN_PROGRESS: WSL setup scripts, env template, DeepLab gate pipeline
 2026-06-28 02:00 | Cursor | integrate | Extract P2 zip → android/, corpus/, scripts/, docs/; add Gradle wrapper; SETUP.md
 2026-06-28 04:30 | Cursor | scope | SF hospitals offline + field-kit reference + remove airplane badge
+2026-06-28 06:00 | Cursor/P1 | nav | Night-sky star navigation: CV detection + catalog plate-solve + ORIENT night mode

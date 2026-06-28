@@ -11,7 +11,7 @@
 - **Medical = first-aid REFERENCE / TRIAGE only**, never diagnosis. The deterministic safety tree is authoritative over the LLM.
 - **Navigation = true-north HEADING, not GPS-grade lat/long.** Don't over-promise position accuracy.
 - **Native Android, not a website.** A browser demo throws away the NPU score.
-- **Night star plate-solve = v2 ROADMAP, not built.** Ship solar-math heading + spoof detection.
+- **Night star plate-solve = shipped on `feature/star-navigation`.** CV detection + catalog geometry; precomputed demo fallback.
 
 ## Workflow Every Agent Must Follow
 1. **Read** STATUS.md + the relevant TASKS file before writing code.

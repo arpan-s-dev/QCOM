@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.medic.app.nav.DeviceOrientationReader
 import com.medic.app.ui.AppUiState
 import com.medic.app.ui.screens.CommunicateScreen
 import com.medic.app.ui.screens.OrientScreen
@@ -23,13 +22,14 @@ private fun sectionIndex(section: AppSection): Int =
 @Composable
 fun LodestarShell(
     state: AppUiState,
-    orientationReader: DeviceOrientationReader,
     onSectionSelected: (AppSection) -> Unit,
     onTreatSubModeChange: (com.medic.app.ui.screens.TreatSubMode) -> Unit,
     onInputChange: (String) -> Unit,
     onSend: () -> Unit,
     onMicToggle: () -> Unit,
-    onSightSun: (Float) -> Unit,
+    onOrientNavModeChange: (com.medic.app.ui.screens.OrientNavMode) -> Unit,
+    onSightSun: () -> Unit,
+    onPickNightSkyImage: () -> Unit,
     onMedicTextChange: (String) -> Unit,
     onTranslate: () -> Unit,
     onGenerateSos: () -> Unit,
@@ -75,11 +75,15 @@ fun LodestarShell(
 
                 AppSection.ORIENT -> OrientScreen(
                     positionSource = state.positionState.source,
+                    orientNavMode = state.orientNavMode,
+                    onOrientNavModeChange = onOrientNavModeChange,
                     sunAzimuthDeg = state.sunAzimuthDeg,
                     sunElevationDeg = state.sunElevationDeg,
                     correctedHeadingDeg = state.correctedHeadingDeg,
+                    starNav = state.starNav,
+                    onPickNightSkyImage = onPickNightSkyImage,
                     nearestHospitals = state.nearestHospitals,
-                    onSightSun = { onSightSun(orientationReader.currentBearingDeg) },
+                    onSightSun = onSightSun,
                     modifier = Modifier.fillMaxSize()
                 )
 

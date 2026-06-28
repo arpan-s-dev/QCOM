@@ -1,34 +1,46 @@
 package com.medic.app.ui.screens
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.unit.dp
-import com.medic.app.nav.PositionSource
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import com.medic.app.data.HospitalWithBearing
+import com.medic.app.nav.PositionSource
+import com.medic.app.ui.components.CompassRing
 import com.medic.app.ui.theme.*
-import kotlin.math.cos
-import kotlin.math.sin
+
+enum class OrientNavMode {
+    SOLAR,
+    NIGHT_SKY
+}
+
+data class StarNavUiState(
+    val processing: Boolean = false,
+    val detectedStars: Int = 0,
+    val message: String? = null,
+    val approximateLat: Double? = null,
+    val latUncertainty: Double? = null,
+    val solverKind: String? = null
+)
 
 @Composable
 fun OrientScreen(
     positionSource: PositionSource,
+    orientNavMode: OrientNavMode,
+    onOrientNavModeChange: (OrientNavMode) -> Unit,
     sunAzimuthDeg: Double?,
     sunElevationDeg: Double?,
     correctedHeadingDeg: Double?,
+    starNav: StarNavUiState,
+    onPickNightSkyImage: () -> Unit,
     nearestHospitals: List<HospitalWithBearing>,
     onSightSun: () -> Unit,
     modifier: Modifier = Modifier
@@ -45,56 +57,35 @@ fun OrientScreen(
         Text(text = "ORIENT", style = FieldType.heading, color = Bone)
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = when (positionSource) {
-                PositionSource.GPS_TRUSTED ->
-                    "GPS is available — solar compass is a backup, not primary, right now."
-                PositionSource.DEAD_RECKONING ->
-                    "GPS unavailable. Dead reckoning active. Solar compass can correct heading drift."
-                PositionSource.SOLAR_FIX ->
-                    "No reliable position fix. Point the phone at the sun to derive true north."
-            },
+            text = orientBanner(positionSource, orientNavMode),
             style = FieldType.caption,
-            modifier = Modifier.padding(bottom = 16.dp)
+            modifier = Modifier.padding(bottom = 12.dp)
         )
 
-        CompassRing(correctedHeadingDeg ?: 0.0, sunAzimuthDeg)
+        OrientModeSwitcher(
+            mode = orientNavMode,
+            onModeChange = onOrientNavModeChange
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        CompassRing(
+            headingDeg = correctedHeadingDeg ?: 0.0,
+            sunAzimuthDeg = if (orientNavMode == OrientNavMode.SOLAR) sunAzimuthDeg else null
+        )
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        if (sunElevationDeg != null && sunElevationDeg < 5.0) {
-            Text(
-                text = "Sun is too low or below the horizon right now — solar sighting won't be reliable.",
-                style = FieldType.caption,
-                color = SeriousAmber
+        when (orientNavMode) {
+            OrientNavMode.SOLAR -> SolarOrientPanel(
+                sunElevationDeg = sunElevationDeg,
+                sunAzimuthDeg = sunAzimuthDeg,
+                onSightSun = onSightSun
             )
-        } else {
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(PanelMoss)
-                    .padding(16.dp)
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "Hold the phone flat, point the TOP EDGE at the sun, then tap below.",
-                        style = FieldType.body,
-                        color = Bone
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    FieldButton(
-                        text = "SIGHT SUN",
-                        onClick = onSightSun,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
-        }
-
-        if (sunAzimuthDeg != null) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Sun azimuth: ${"%.1f".format(sunAzimuthDeg)}°  •  elevation: ${"%.1f".format(sunElevationDeg ?: 0.0)}°",
-                style = FieldType.caption
+            OrientNavMode.NIGHT_SKY -> NightSkyOrientPanel(
+                starNav = starNav,
+                correctedHeadingDeg = correctedHeadingDeg,
+                onPickNightSkyImage = onPickNightSkyImage
             )
         }
 
@@ -104,69 +95,187 @@ fun OrientScreen(
     }
 }
 
+private fun orientBanner(source: PositionSource, mode: OrientNavMode): String {
+    return when (mode) {
+        OrientNavMode.NIGHT_SKY -> when (source) {
+            PositionSource.GPS_TRUSTED ->
+                "GPS available — night-sky heading is a backup when jammed or at night."
+            PositionSource.DEAD_RECKONING ->
+                "GPS unavailable. Import a night-sky photo to derive true north from the star field."
+            PositionSource.SOLAR_FIX, PositionSource.STAR_FIX ->
+                "No reliable position fix. Star-field plate solve provides heading only."
+        }
+        OrientNavMode.SOLAR -> when (source) {
+            PositionSource.GPS_TRUSTED ->
+                "GPS is available — solar compass is a backup, not primary, right now."
+            PositionSource.DEAD_RECKONING ->
+                "GPS unavailable. Dead reckoning active. Solar compass can correct heading drift."
+            PositionSource.SOLAR_FIX, PositionSource.STAR_FIX ->
+                "No reliable position fix. Point the phone at the sun to derive true north."
+        }
+    }
+}
+
 @Composable
-private fun CompassRing(headingDeg: Double, sunAzimuthDeg: Double?) {
-    val animatedHeading by animateFloatAsState(
-        targetValue = headingDeg.toFloat(),
-        animationSpec = LodestarMotion.compassSpring,
-        label = "compass-needle"
+private fun OrientModeSwitcher(
+    mode: OrientNavMode,
+    onModeChange: (OrientNavMode) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(PanelDeep)
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        OrientModeTab(
+            label = "Solar (day)",
+            selected = mode == OrientNavMode.SOLAR,
+            onClick = { onModeChange(OrientNavMode.SOLAR) },
+            modifier = Modifier.weight(1f)
+        )
+        OrientModeTab(
+            label = "Night sky (stars)",
+            selected = mode == OrientNavMode.NIGHT_SKY,
+            onClick = { onModeChange(OrientNavMode.NIGHT_SKY) },
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun OrientModeTab(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(6.dp))
+            .background(if (selected) PanelMoss else PanelDeep)
+            .clickable(onClick = onClick)
+            .padding(vertical = 10.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            style = FieldType.body,
+            color = if (selected) Bone else NeutralGray
+        )
+    }
+}
+
+@Composable
+private fun SolarOrientPanel(
+    sunElevationDeg: Double?,
+    sunAzimuthDeg: Double?,
+    onSightSun: () -> Unit
+) {
+    if (sunElevationDeg != null && sunElevationDeg < 5.0) {
+        Text(
+            text = "Sun is too low or below the horizon right now — solar sighting won't be reliable.",
+            style = FieldType.caption,
+            color = SeriousAmber
+        )
+    } else {
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(PanelMoss)
+                .padding(16.dp)
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "Hold the phone flat, point the TOP EDGE at the sun, then tap below.",
+                    style = FieldType.body,
+                    color = Bone
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                FieldButton(
+                    text = "SIGHT SUN",
+                    onClick = onSightSun,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    }
+
+    if (sunAzimuthDeg != null) {
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "Sun azimuth: ${"%.1f".format(sunAzimuthDeg)}°  •  elevation: ${"%.1f".format(sunElevationDeg ?: 0.0)}°",
+            style = FieldType.caption
+        )
+    }
+}
+
+@Composable
+private fun NightSkyOrientPanel(
+    starNav: StarNavUiState,
+    correctedHeadingDeg: Double?,
+    onPickNightSkyImage: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(PanelMoss)
+            .padding(16.dp)
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "Import an outdoor night-sky photo. The app detects star points and plate-solves against a bundled catalog — no network, no ML training.",
+                style = FieldType.body,
+                color = Bone
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            FieldButton(
+                text = if (starNav.processing) "PROCESSING…" else "IMPORT NIGHT-SKY PHOTO",
+                onClick = onPickNightSkyImage,
+                enabled = !starNav.processing,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+
+    Spacer(modifier = Modifier.height(12.dp))
+    Text(
+        text = "Heading from star field — accuracy depends on image quality.",
+        style = FieldType.caption,
+        color = NeutralGray
     )
 
-    val sizeDp = 220.dp
-    Canvas(modifier = Modifier.size(sizeDp)) {
-        val center = Offset(size.width / 2, size.height / 2)
-        val radius = size.minDimension / 2 - 12
+    if (starNav.processing) {
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(text = "Detecting stars and matching catalog…", style = FieldType.caption)
+    }
 
-        drawCircle(
-            color = PanelBorder,
-            radius = radius,
-            center = center,
-            style = Stroke(width = 2.5f)
+    starNav.message?.let { msg ->
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = msg,
+            style = FieldType.caption,
+            color = if (correctedHeadingDeg != null) Bone else SeriousAmber
         )
+    }
 
-        listOf(0.0 to "N", 90.0 to "E", 180.0 to "S", 270.0 to "W").forEach { (angle, label) ->
-            val rad = Math.toRadians(angle - 90.0)
-            val tickOuter = Offset(
-                center.x + radius * cos(rad).toFloat(),
-                center.y + radius * sin(rad).toFloat()
-            )
-            val tickInner = Offset(
-                center.x + (radius - 14) * cos(rad).toFloat(),
-                center.y + (radius - 14) * sin(rad).toFloat()
-            )
-            drawLine(color = NeutralGray, start = tickInner, end = tickOuter, strokeWidth = 2.5f)
-            drawContext.canvas.nativeCanvas.drawText(
-                label,
-                center.x + (radius - 28) * cos(rad).toFloat() - 6,
-                center.y + (radius - 28) * sin(rad).toFloat() + 6,
-                android.graphics.Paint().apply {
-                    color = android.graphics.Color.parseColor("#E8E4D9")
-                    textSize = 28f
-                    isFakeBoldText = true
-                }
-            )
-        }
-
-        if (sunAzimuthDeg != null) {
-            val rad = Math.toRadians(sunAzimuthDeg - 90.0)
-            val sunPos = Offset(
-                center.x + (radius - 4) * cos(rad).toFloat(),
-                center.y + (radius - 4) * sin(rad).toFloat()
-            )
-            drawCircle(color = ModerateYellow, radius = 9f, center = sunPos)
-        }
-
-        val needleRad = Math.toRadians(animatedHeading.toDouble() - 90.0)
-        val needleTip = Offset(
-            center.x + (radius - 20) * cos(needleRad).toFloat(),
-            center.y + (radius - 20) * sin(needleRad).toFloat()
+    if (starNav.detectedStars > 0) {
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            text = "Detected ${starNav.detectedStars} star points" +
+                (starNav.solverKind?.let { " • solver: $it" } ?: ""),
+            style = FieldType.caption
         )
-        val needleTail = Offset(
-            center.x - (radius * 0.22f) * cos(needleRad).toFloat(),
-            center.y - (radius * 0.22f) * sin(needleRad).toFloat()
+    }
+
+    if (correctedHeadingDeg != null && starNav.approximateLat != null) {
+        Spacer(modifier = Modifier.height(8.dp))
+        val unc = starNav.latUncertainty ?: 1.0
+        Text(
+            text = "Approx. latitude ${"%.2f".format(starNav.approximateLat)}° ± ${"%.1f".format(unc)}° — not GPS-grade",
+            style = FieldType.caption,
+            color = NeutralGray
         )
-        drawLine(color = CompassBrass, start = needleTail, end = needleTip, strokeWidth = 5f)
-        drawCircle(color = CompassBrass, radius = 7f, center = center)
-        drawCircle(color = PanelDeep, radius = 3f, center = center)
     }
 }

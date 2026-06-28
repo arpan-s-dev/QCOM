@@ -11,8 +11,8 @@
 | Embedder | **BGE-small** | For medical RAG |
 | Runtime | **ExecuTorch 1.0 + Qualcomm QNN backend** | |
 | App | **Native Android / Kotlin / Jetpack Compose** | NOT a website |
-| Nav (shipping) | **Solar-math heading + GPS spoof detection + dead-reckoning** | |
-| Night star plate-solve | **v2 ROADMAP — NOT built** | Pitch as future; don't risk the demo on it |
+| Nav (shipping) | **Solar-math heading + GPS spoof detection + dead-reckoning + night-sky star plate-solve** | |
+| Night star plate-solve | **DONE (feature/star-navigation)** | CV star detection + Yale catalog + precomputed demo fallback |
 | Hospital routing / wound vision classifier / QR | **SF-only offline JSON** | ~18 real SF hospitals in `sf_hospitals.json`; approximate cached GPS; no APIs |
 | Medical content | **First-aid actions + field-kit reference** | RAG corpus + SafetyTree; kit JSON is reference-only, never prescribing/dosing |
 | Runtime network calls | **NONE** | Must work in airplane mode; no decorative airplane badge in UI |
@@ -45,3 +45,4 @@ Person 2 expanded the original two-method sketch. Person 1 implements all method
 - `2026-06-28` | scope | Hospitals: SF-only baked JSON (`sf_hospitals.json`), nearest-3 by great-circle from cached approximate GPS — no routing APIs.
 - `2026-06-28` | scope | Medical: first-aid actions (corpus + SafetyTree) + `field_kit_reference.json` kit guide — reference only, never prescribing/dosing.
 - `2026-06-28` | scope | Removed decorative airplane-mode badge from StatusStrip; offline/no-INTERNET behavior unchanged.
+- `2026-06-28` | nav | Star navigation = CV star detection (`CvStarDetector`) + catalog plate-solve (`GeometryStarSolver`, tetra3-style triangle matching), NO model training; Yale Bright Star Catalog bundled in `yale_bright_stars.json`; precomputed fallback in `star_demo_fallback.json` for demo image hash/filename.
