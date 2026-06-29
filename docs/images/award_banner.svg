@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 380" width="1200" height="380" font-family="'Segoe UI',Helvetica,Arial,sans-serif" role="img" aria-label="Winner — Copilot-Powered Build Award, Qualcomm x Meta ExecuTorch Hackathon">
+  <title>Winner — Copilot-Powered Build Award</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d1117"/>
+      <stop offset="0.55" stop-color="#161126"/>
+      <stop offset="1" stop-color="#0a0a12"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="0.5" cy="0.15" r="0.85">
+      <stop offset="0" stop-color="#8957E5" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#8957E5" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff3bf"/>
+      <stop offset="0.5" stop-color="#ffc24b"/>
+      <stop offset="1" stop-color="#ff7a18"/>
+    </linearGradient>
+    <linearGradient id="fire" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#ffe66b"/>
+      <stop offset="0.45" stop-color="#ff8a1e"/>
+      <stop offset="1" stop-color="#ff2d2d"/>
+    </linearGradient>
+    <linearGradient id="fireCore" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.6" stop-color="#ffe66b"/>
+      <stop offset="1" stop-color="#ff9d1e"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0.6"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="soft" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="18"/></filter>
+    <path id="flame" d="M-24,0 C-30,-40 -13,-70 0,-98 C13,-70 30,-40 24,0 Q0,12 -24,0 Z"/>
+    <clipPath id="winClip"><text x="600" y="214" text-anchor="middle" font-size="116" font-weight="800" letter-spacing="6">WINNER</text></clipPath>
+    <style>
+      .flame{transform-box:fill-box;transform-origin:50% 100%;animation:flick 1.5s ease-in-out infinite}
+      @keyframes flick{0%,100%{transform:scaleY(1) scaleX(1) translateY(0);opacity:.92}
+        30%{transform:scaleY(1.24) scaleX(.92) translateY(-12px);opacity:1}
+        65%{transform:scaleY(.88) scaleX(1.08) translateY(4px);opacity:.85}}
+      .ember{animation:rise 2.6s ease-in infinite;opacity:0}
+      @keyframes rise{0%{transform:translateY(0);opacity:0}15%{opacity:1}100%{transform:translateY(-230px);opacity:0}}
+      .halo{animation:breathe 3.4s ease-in-out infinite}
+      @keyframes breathe{0%,100%{opacity:.5}50%{opacity:1}}
+      .sweep{animation:sweep 3.8s linear infinite}
+      @keyframes sweep{0%{transform:translateX(-460px) skewX(-18deg)}100%{transform:translateX(1260px) skewX(-18deg)}}
+    </style>
+  </defs>
+
+  <rect width="1200" height="380" rx="22" fill="url(#bg)"/>
+  <rect width="1200" height="380" rx="22" fill="url(#halo)" class="halo"/>
+
+  <!-- fire rising behind the title -->
+  <g>
+    <g transform="translate(130,380) scale(1.2)"><use href="#flame" class="flame" fill="url(#fire)" style="animation-delay:0s"/></g>
+    <g transform="translate(255,380) scale(1.55)"><use href="#flame" class="flame" fill="url(#fire)" style="animation-delay:.45s"/></g>
+    <g transform="translate(385,380) scale(1.15)"><use href="#flame" class="flame" fill="url(#fire)" style="animation-delay:.2s"/></g>
+    <g transform="translate(510,380) scale(1.6)"><use href="#flame" class="flame" fill="url(#fire)" style="animation-delay:.7s"/></g>
+    <g transform="translate(600,380) scale(1.3)"><use href="#flame" class="flame" fill="url(#fire)" style="animation-delay:.1s"/></g>
+    <g transform="translate(690,380) scale(1.6)"><use href="#flame" class="flame" fill="url(#fire)" style="animation-delay:.55s"/></g>
+    <g transform="translate(815,380) scale(1.15)"><use href="#flame" class="flame" fill="url(#fire)" style="animation-delay:.3s"/></g>
+    <g transform="translate(945,380) scale(1.55)"><use href="#flame" class="flame" fill="url(#fire)" style="animation-delay:.6s"/></g>
+    <g transform="translate(1070,380) scale(1.2)"><use href="#flame" class="flame" fill="url(#fire)" style="animation-delay:.15s"/></g>
+
+    <g transform="translate(255,380) scale(0.9)"><use href="#flame" class="flame" fill="url(#fireCore)" style="animation-delay:.5s"/></g>
+    <g transform="translate(510,380) scale(0.95)"><use href="#flame" class="flame" fill="url(#fireCore)" style="animation-delay:.75s"/></g>
+    <g transform="translate(690,380) scale(0.95)"><use href="#flame" class="flame" fill="url(#fireCore)" style="animation-delay:.6s"/></g>
+    <g transform="translate(945,380) scale(0.9)"><use href="#flame" class="flame" fill="url(#fireCore)" style="animation-delay:.65s"/></g>
+  </g>
+
+  <!-- scrim so the title stays crisp over the fire -->
+  <ellipse cx="600" cy="200" rx="560" ry="135" fill="#0a0a12" opacity="0.6" filter="url(#soft)"/>
+
+  <!-- trophy -->
+  <g transform="translate(600,78)" filter="url(#glow)">
+    <path d="M-31,-30 H31 L27,-6 Q0,13 -27,-6 Z" fill="url(#gold)"/>
+    <path d="M-31,-26 C-52,-26 -52,4 -33,4 M31,-26 C52,-26 52,4 33,4" fill="none" stroke="url(#gold)" stroke-width="6" stroke-linecap="round"/>
+    <rect x="-6" y="11" width="12" height="14" fill="url(#gold)"/>
+    <path d="M-24,25 H24 L30,38 H-30 Z" fill="url(#gold)"/>
+    <path d="M-11,-26 l4,16 h14 l4,-16 z" fill="#fff7d6" opacity="0.85"/>
+  </g>
+
+  <!-- WINNER -->
+  <text x="600" y="214" text-anchor="middle" font-size="116" font-weight="800" letter-spacing="6" fill="url(#fire)" filter="url(#glow)" opacity="0.75">WINNER</text>
+  <text x="600" y="214" text-anchor="middle" font-size="116" font-weight="800" letter-spacing="6" fill="url(#gold)">WINNER</text>
+  <g clip-path="url(#winClip)"><rect class="sweep" x="-200" y="90" width="150" height="170" fill="url(#sheen)"/></g>
+
+  <text x="600" y="272" text-anchor="middle" font-size="37" font-weight="700" letter-spacing="1.5" fill="#f5f3ff">Copilot-Powered Build Award</text>
+  <text x="600" y="306" text-anchor="middle" font-size="17" font-weight="600" letter-spacing="5" fill="#c5b6f2">QUALCOMM &#215; META &#8226; EXECUTORCH HACKATHON</text>
+
+  <g fill="#ffd27a">
+    <circle class="ember" cx="320" cy="350" r="3" style="animation-delay:0s"/>
+    <circle class="ember" cx="470" cy="356" r="2.4" style="animation-delay:.9s"/>
+    <circle class="ember" cx="640" cy="350" r="3.4" style="animation-delay:.4s"/>
+    <circle class="ember" cx="780" cy="356" r="2.4" style="animation-delay:1.5s"/>
+    <circle class="ember" cx="930" cy="350" r="3" style="animation-delay:.7s"/>
+    <circle class="ember" cx="1060" cy="356" r="2.4" style="animation-delay:1.9s"/>
+  </g>
+
+  <rect x="1" y="1" width="1198" height="378" rx="22" fill="none" stroke="#8957E5" stroke-opacity="0.4" stroke-width="2"/>
+</svg>

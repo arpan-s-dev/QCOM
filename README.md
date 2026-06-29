@@ -1,9 +1,11 @@
 # Lodestar
 
 <p align="center">
-  <img alt="Qualcomm × Meta ExecuTorch Hackathon" src="https://img.shields.io/badge/Qualcomm%20%C3%97%20Meta-ExecuTorch%20Hackathon-3253DC?style=for-the-badge&logo=qualcomm&logoColor=white">
-  <img alt="Winner — Copilot-Powered Build Award" src="https://img.shields.io/badge/Winner-Copilot--Powered%20Build%20Award-8957E5?style=for-the-badge&logo=githubcopilot&logoColor=white">
+  <a href="docs/SCREENSHOTS.md"><img alt="Winner — Copilot-Powered Build Award · Qualcomm × Meta ExecuTorch Hackathon" src="docs/images/award_banner.svg" width="100%"></a>
 </p>
+<p align="center">
+  <img alt="Qualcomm × Meta ExecuTorch Hackathon" src="https://img.shields.io/badge/Qualcomm%20%C3%97%20Meta-ExecuTorch%20Hackathon-3253DC?style=flat-square&logo=qualcomm&logoColor=white">
+  <img alt="GitHub Copilot" src="https://img.shields.io/badge/Built%20with-GitHub%20Copilot-8957E5?style=flat-square&logo=githubcopilot&logoColor=white"></p>
 <p align="center">
   <img alt="Android on-device" src="https://img.shields.io/badge/Android-on--device-3DDC84?style=flat-square&logo=android&logoColor=white">
   <img alt="Kotlin · Jetpack Compose" src="https://img.shields.io/badge/Kotlin-Jetpack%20Compose-7F52FF?style=flat-square&logo=kotlin&logoColor=white">
