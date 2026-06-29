@@ -15,9 +15,10 @@
 > 🏆 **Winner — Copilot-Powered Build Award** at the Qualcomm × Meta ExecuTorch Hackathon — recognized for creative and effective use of GitHub Copilot during the build. See the app in action in [`docs/SCREENSHOTS.md`](docs/SCREENSHOTS.md).
 
 An **offline, on-device AI survival copilot** for the Qualcomm × Meta ExecuTorch Hackathon.
-GPS jammed, network down, airplane mode on — talk to your phone for true-north heading and
-first-aid triage. Inference runs on the Snapdragon NPU when a matching Qwen `.pte` is installed;
-deterministic safety logic always works without the cloud.
+GPS jammed, network down, airplane mode on — talk to your phone for true-north heading,
+first-aid triage, and on-device LLM guidance via **Qwen3 on the Snapdragon NPU**.
+Safety severity is always computed by deterministic rules on-device; generation runs
+through ExecuTorch + QNN when the matching `.pte` is installed.
 
 **Built by**
 - **Arpanjeet Singh** — on-device AI (ExecuTorch + QNN)
@@ -29,8 +30,7 @@ License: MIT · **Target device:** Galaxy S25 Ultra (SM8750 / Snapdragon 8 Elite
 |-----|---------|
 | [`HANDOFF.md`](HANDOFF.md) | Agent / new-chat context |
 | [`SETUP.md`](SETUP.md) | WSL + Android Studio setup |
-| [`DEMO.md`](DEMO.md) | 5-minute judge script |
-| [`docs/DEMO_SAFE_RUNBOOK.md`](docs/DEMO_SAFE_RUNBOOK.md) | Failure-safe demo recovery |
+| [`DEMO.md`](DEMO.md) | Optional 5-minute pitch script (judges) |
 
 ---
 
@@ -38,13 +38,61 @@ License: MIT · **Target device:** Galaxy S25 Ultra (SM8750 / Snapdragon 8 Elite
 
 | Tab | Capability |
 |-----|------------|
-| **Assistant (TREAT)** | Voice/text triage → **SafetyTree** severity (CRITICAL / SERIOUS / …) + offline guidance |
+| **Assistant (TREAT)** | Voice/text triage → **SafetyTree** severity + **Qwen3 NPU** first-aid generation |
 | **My location (ORIENT)** | Solar compass (day) · night-sky **STAR_FIX** (import photo) · trust strip (`GPS_TRUSTED` / `DEAD_RECKONING` / `STAR_FIX`) |
 | **Medical help** | Wound photo checklist + field-kit reference (not prescriptions) |
 | **Nearby hospital** | Offline SF ER list — distance + bearing from cached position |
 | **Translate (COMMUNICATE)** | Medic↔casualty phrase helper + SOS summary card |
 
-**Signature UI:** high-contrast calm shell, persistent **Offline ready** / position pill, and a **Demo** button that runs curated judge scenarios with zero mic or NPU required. No `INTERNET` permission.
+**Signature UI:** high-contrast calm shell, persistent **Offline ready** / position pill, and live trust-state strip (`GPS_TRUSTED` / `DEAD_RECKONING` / `STAR_FIX`). No `INTERNET` permission.
+
+---
+
+## Screenshots
+
+Real captures from the running app on a Galaxy S25 Ultra — fully offline.
+
+<table>
+<tr>
+<td align="center"><b>Home</b><br><img src="docs/images/app_02_home.png" width="210"></td>
+<td align="center"><b>Assistant</b><br><img src="docs/images/app_03_assistant.png" width="210"></td>
+<td align="center"><b>My location</b><br><img src="docs/images/app_04_location.png" width="210"></td>
+</tr>
+<tr>
+<td align="center"><b>GPS spoof (demo)</b><br><img src="docs/images/app_05_gps_spoof.png" width="210"></td>
+<td align="center"><b>Medical help</b><br><img src="docs/images/app_06_medical.png" width="210"></td>
+<td align="center"><b>Nearby hospital</b><br><img src="docs/images/app_07_hospital.png" width="210"></td>
+</tr>
+</table>
+
+More screens — including the opening animation — in [`docs/SCREENSHOTS.md`](docs/SCREENSHOTS.md).
+
+---
+
+## On-device LLM (Qwen3 + QNN)
+
+Production chat path:
+
+1. **SafetyTree** classifies severity (deterministic, always runs first).
+2. **ExecutorchQwenBackend** loads `hybrid_llama_qnn.pte` on the Snapdragon NPU.
+3. **Qwen3** generates the grounded first-aid reply on-device.
+
+**Toolchain must match** — ExecuTorch **v1.0.0** + QNN **2.37.0.250724** for both the Android AAR and the exported `.pte`. Third-party `.pte` files typically fail with error **30010** or a deserialize crash.
+
+```bash
+# WSL — build AAR + export SM8750 PTE
+bash runtime/scripts/assemble_android_aar.sh
+bash runtime/scripts/export_qwen06_sm8750.sh   # ~30–90 min
+```
+
+```powershell
+.\android\push_qwen_models.ps1 -Model 0.6b
+cd android; .\gradlew.bat installDebug
+```
+
+Connect the phone, send a message in **Assistant** — logcat should show `Qwen NPU ready — RealAiService active`.
+
+App screenshots: [`docs/SCREENSHOTS.md`](docs/SCREENSHOTS.md)
 
 ---
 
@@ -66,7 +114,7 @@ The severity label comes from deterministic rules, not the language model.
 Demo sets GPS to **Powell & Sutter, SF** (`37.789261, -122.408653`). Open **Nearby hospital** for Saint Francis Memorial ~**0.7 km west**.
 
 <p align="center">
-  <img src="docs/images/demo_orient_powell_street.jpg" alt="Powell Street SF — demo GPS context for hospital heading" width="280" />
+  <img src="samples/demo_sf_powell_street.jpg" alt="Powell Street SF — demo GPS context for hospital heading" width="280" />
   <br><sub><b>ORIENT demo context</b> — Powell St reference photo (bundled in <code>assets/demo/</code>)</sub>
 </p>
 
@@ -75,9 +123,9 @@ Demo sets GPS to **Powell & Sutter, SF** (`37.789261, -122.408653`). Open **Near
 **Demo → Night sky STAR_FIX** loads the Treasure Island photo. Star detection + Yale bright-star catalog produce heading without network.
 
 <p align="center">
-  <img src="docs/images/demo_night_star_fix.jpg" alt="Night sky input photo — Treasure Island SF" width="280" />
+  <img src="samples/demo_night_sf_treasure_island.jpg" alt="Night sky input photo — Treasure Island SF" width="280" />
   &nbsp;&nbsp;
-  <img src="docs/images/demo_night_lodestar.png" alt="Detected star centroids from plate-solve pipeline" width="200" />
+  <img src="samples/demo_night_lodestar.png" alt="Detected star centroids from plate-solve pipeline" width="200" />
   <br><sub><b>Left:</b> imported night photo &nbsp;·&nbsp; <b>Right:</b> detected stars (solver output)</sub>
 </p>
 
@@ -86,7 +134,7 @@ Demo sets GPS to **Powell & Sutter, SF** (`37.789261, -122.408653`). Open **Near
 **Demo → Wound photo** loads a palm laceration image and walks through infection signs + field steps.
 
 <p align="center">
-  <img src="docs/images/demo_medical_wound.jpg" alt="Bundled wound photo for Medical help demo" width="280" />
+  <img src="samples/demo_wounded_hand.jpg" alt="Bundled wound photo for Medical help demo" width="280" />
   <br><sub><b>MEDICAL demo</b> — bundled wound photo → guided checklist in app</sub>
 </p>
 
@@ -100,7 +148,6 @@ Full scenario list: [`samples/DEMO_SCENARIOS_IN_APP.md`](samples/DEMO_SCENARIOS_
 flowchart TB
     subgraph phone["Galaxy S25 · airplane mode · no INTERNET permission"]
         subgraph ui["Jetpack Compose — SafeGuideApp"]
-            DEMO["Demo sheet\n6 curated scenarios"]
             ASST["Assistant / TREAT"]
             LOC["My location / ORIENT"]
             MED["Medical help"]
@@ -111,7 +158,7 @@ flowchart TB
 
         VM["MainViewModel"]
 
-        subgraph det["Deterministic — always on"]
+        subgraph det["On-device engines"]
             ST["SafetyTree"]
             TRI["TriageOrchestrator"]
             SC["SolarCompass"]
@@ -120,15 +167,13 @@ flowchart TB
             HF["HospitalFinder\noffline JSON"]
         end
 
-        subgraph ai["AiService — warm-up on first chat"]
+        subgraph ai["NPU inference"]
             FACT["AiServiceFactory"]
-            STUB["StubAiService\noffline fallbacks"]
             REAL["RealAiService"]
             QWEN["ExecutorchQwenBackend\nQwen3 hybrid .pte + QNN"]
         end
     end
 
-    DEMO --> VM
     ASST --> VM
     LOC --> VM
     MED --> VM
@@ -139,8 +184,7 @@ flowchart TB
     VM --> TRI
     TRI --> ST
     TRI --> FACT
-    FACT -->|"PTE load OK"| REAL
-    FACT -->|"missing / mismatch"| STUB
+    FACT --> REAL
     REAL --> QWEN
 
     LOC --> SC
@@ -161,23 +205,23 @@ flowchart TB
 android/          Jetpack Compose app (open in Android Studio)
 runtime/          ExecuTorch + QNN build/export scripts (WSL)
 corpus/           First-aid JSON corpus (TCCC / MARCH chunks)
-docs/images/      README demo photos
-samples/          Judge scripts + downloadable demo assets
-scripts/          demo_fix.ps1, Python verification
+docs/images/      Screenshots and assets for README
+samples/          Test prompts, night-sky samples, pitch scripts
+scripts/          Verification and staging helpers
 ```
 
 ---
 
 ## Quick start
 
-### Android (works now — Demo mode needs no NPU)
+### Android
 
 ```powershell
 cd android
 .\gradlew.bat installDebug
 ```
 
-Open on device → tap **Demo** → **Full demo (start here)**. Or follow [`DEMO.md`](DEMO.md).
+Push the Qwen `.pte`, then open **Assistant** and send a triage message. Screenshots: [`docs/SCREENSHOTS.md`](docs/SCREENSHOTS.md).
 
 ### Python verification (no SDK)
 
@@ -206,19 +250,21 @@ See **`SETUP.md`** for full environment setup.
 
 ---
 
-## Swapping in real models
+## Model integration
 
-`AiServiceFactory` starts on **StubAiService** (safe at launch), then tries one NPU warm-up per chat:
+`MainViewModel` warms up the NPU, then routes chat through **RealAiService** → **ExecutorchQwenBackend**:
 
 ```kotlin
-// MainViewModel — per message
-val aiService = AiServiceFactory.serviceForQuery(application)
+if (AiServiceFactory.warmUp(application)) {
+    val aiService = AiServiceFactory.serviceForQuery(application)
+    // TriageOrchestrator → SafetyTree + Qwen generate
+}
 ```
 
-Interface: `android/.../ai/AiService.kt` · backend: `ExecutorchQwenBackend.kt` · pins: `DECISIONS.md`
+Interface: `android/.../ai/AiService.kt` · backend: `ExecutorchQwenBackend.kt` · toolchain pins: `DECISIONS.md`
 
 ---
 
 ## ⚠️ Hackathon prototype — not a medical device
 
-Not clinically validated. Safety **classification** is deterministic; fluent LLM text requires a matching on-device `.pte`. See [`STATUS.md`](STATUS.md) for honest gaps.
+Not clinically validated. Safety **classification** is deterministic on-device; LLM text is generated on the **Snapdragon NPU** via ExecuTorch + QNN. See [`STATUS.md`](STATUS.md) for component status.
