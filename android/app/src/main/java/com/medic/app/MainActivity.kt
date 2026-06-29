@@ -131,7 +131,7 @@ class MainActivity : ComponentActivity() {
                     onSend = viewModel::onSend,
                     onMicToggle = viewModel::onMicToggle,
                     onOrientNavModeChange = viewModel::onOrientNavModeChange,
-                    onUseMyLocation = { ensureDeviceLocation() },
+                    onUseMyLocation = { viewModel.onUseMyLocationClicked { ensureDeviceLocation() } },
                     onSightSun = { viewModel.onSightSun(orientationReader.currentBearingDeg) },
                     onPickNightSkyImage = {
                         pickNightSkyImage.launch(
@@ -145,7 +145,10 @@ class MainActivity : ComponentActivity() {
                     },
                     onSetSpoof = viewModel::setSpoofDemo,
                     onMedicTextChange = viewModel::onMedicTextChange,
-                    onTranslate = { viewModel.onTranslate() }
+                    onTranslate = { viewModel.onTranslate() },
+                    onRunDemoScenario = viewModel::runDemoScenario,
+                    onClearDemoNavigation = viewModel::clearDemoNavigation,
+                    onExitDemoMode = viewModel::exitDemoMode
                 )
             }
         }

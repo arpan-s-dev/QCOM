@@ -1,6 +1,9 @@
 # Lodestar — copy/paste test prompts (TREAT tab)
-# Type these or speak them once RealAiService ASR is wired.
-# SafetyTree severity is authoritative; stub LLM text is placeholder.
+
+## Full demo scenario (image + SF location + hospital heading)
+See samples/DEMO_SCENARIO.md — use with demo_wounded_hand.jpg + demo_sf_powell_street.jpg
+
+I fell on the sidewalk and cut my palm — there's a lot of blood and it hasn't stopped. I'm near Powell Street in San Francisco and GPS is unreliable.
 
 ## Demo pair (negation — use these first)
 There's a lot of blood on his leg and it hasn't stopped.

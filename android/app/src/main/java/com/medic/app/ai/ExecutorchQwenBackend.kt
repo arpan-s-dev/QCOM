@@ -93,7 +93,7 @@ class ExecutorchQwenBackend(
                 Log.d(TAG, "Qwen stats: $stats")
             }
         }
-        llm.generate(prompt, QwenModelPaths.MAX_SEQ_LEN, callback, false)
+        llm.generate(prompt, QwenModelPaths.maxSeqLen(context), callback, false)
         out.toString().trim()
     }
 

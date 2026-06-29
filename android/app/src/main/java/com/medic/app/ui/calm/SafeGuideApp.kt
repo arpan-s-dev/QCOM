@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.medic.app.demo.DemoScenarioSheet
 import com.medic.app.ui.AppUiState
 import com.medic.app.ui.screens.OrientNavMode
 import com.medic.app.ui.theme.*
@@ -67,10 +68,21 @@ fun SafeGuideApp(
     onSetSpoof: (Boolean) -> Unit,
     onMedicTextChange: (String) -> Unit,
     onTranslate: () -> Unit,
+    onRunDemoScenario: (com.medic.app.demo.DemoScenario) -> Unit,
+    onClearDemoNavigation: () -> Unit,
+    onExitDemoMode: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var screen by remember { mutableStateOf(SgScreen.HOME) }
     var showIntro by remember { mutableStateOf(true) }
+    var showDemoSheet by remember { mutableStateOf(false) }
+
+    LaunchedEffect(state.demoNavigateTo) {
+        state.demoNavigateTo?.let { key ->
+            runCatching { SgScreen.valueOf(key) }.getOrNull()?.let { screen = it }
+            onClearDemoNavigation()
+        }
+    }
     LaunchedEffect(Unit) {
         delay(1150)
         showIntro = false
@@ -87,9 +99,24 @@ fun SafeGuideApp(
                     .statusBarsPadding()
             ) {
                 if (screen == SgScreen.HOME) {
-                    HomeTopBar()
+                    HomeTopBar(
+                        demoActive = state.demoModeActive,
+                        onDemoClick = { showDemoSheet = true }
+                    )
                 } else {
-                    ScreenTopBar(title = screen.title, onBack = { screen = SgScreen.HOME })
+                    ScreenTopBar(
+                        title = screen.title,
+                        onBack = { screen = SgScreen.HOME },
+                        demoActive = state.demoModeActive,
+                        onDemoClick = { showDemoSheet = true }
+                    )
+                }
+
+                if (state.demoBanner != null) {
+                    DemoBanner(
+                        text = state.demoBanner,
+                        onDismiss = onExitDemoMode
+                    )
                 }
 
                 Box(modifier = Modifier.weight(1f)) {
@@ -109,6 +136,13 @@ fun SafeGuideApp(
 
                 SgBottomBar(current = screen, onSelect = { screen = it })
             }
+
+            DemoScenarioSheet(
+                visible = showDemoSheet,
+                activeScenarioId = state.activeDemoScenarioId,
+                onDismiss = { showDemoSheet = false },
+                onRunScenario = onRunDemoScenario
+            )
         }
     }
 }
@@ -146,7 +180,7 @@ private fun IntroSplash() {
 }
 
 @Composable
-private fun HomeTopBar() {
+private fun HomeTopBar(demoActive: Boolean, onDemoClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -155,12 +189,12 @@ private fun HomeTopBar() {
     ) {
         Text(text = "SafeGuide", color = SgTextSecondary, fontSize = 14.sp)
         Spacer(Modifier.weight(1f))
-        OfflineBadge()
+        OfflineStatusRow(demoActive = demoActive, onDemoClick = onDemoClick)
     }
 }
 
 @Composable
-private fun ScreenTopBar(title: String, onBack: () -> Unit) {
+private fun ScreenTopBar(title: String, onBack: () -> Unit, demoActive: Boolean, onDemoClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -179,7 +213,54 @@ private fun ScreenTopBar(title: String, onBack: () -> Unit) {
         Spacer(Modifier.width(6.dp))
         Text(text = title, color = SgText, fontSize = 18.sp, fontWeight = FontWeight.Medium)
         Spacer(Modifier.weight(1f))
+        OfflineStatusRow(demoActive = demoActive, onDemoClick = onDemoClick)
+    }
+}
+
+@Composable
+private fun DemoBanner(text: String, onDismiss: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(SgAssistant.tile)
+            .clickable(onClick = onDismiss)
+            .padding(horizontal = 14.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text("DEMO", color = SgAssistant.icon, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.width(8.dp))
+        Text(text, color = SgAssistant.title, fontSize = 12.sp, modifier = Modifier.weight(1f))
+        Text("×", color = SgTextMuted, fontSize = 16.sp)
+    }
+}
+
+@Composable
+fun OfflineStatusRow(demoActive: Boolean, onDemoClick: () -> Unit) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        DemoChip(active = demoActive, onClick = onDemoClick)
         OfflineBadge()
+    }
+}
+
+@Composable
+fun DemoChip(active: Boolean, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(if (active) SgBlue.copy(alpha = 0.22f) else SgRaised)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = if (active) "Demo on" else "Demo",
+            color = if (active) SgBlue else SgTextSecondary,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium
+        )
     }
 }
 

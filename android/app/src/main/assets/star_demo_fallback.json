@@ -1,5 +1,5 @@
 {
-  "note": "Precomputed plate-solve results for demo night-sky photos. Hash entries (most specific) are checked first via file order; then filename rules.",
+  "note": "Precomputed plate-solve results for demo night-sky photos. Match by filename substring or SHA-256 prefix of image bytes. Real CC0 samples in samples/ \u2014 see real_samples_attribution.json.",
   "entries": [
     {
       "content_hash_prefix": "36e045bc7d7c2cba",
@@ -7,7 +7,7 @@
       "approximate_lat_deg": 37.8147,
       "lat_uncertainty_deg": 1.0,
       "matched_star_count": 12,
-      "message": "CC0 — Bay Bridge night sky (Orion/Canis Major), Treasure Island SF."
+      "message": "CC0 \u2014 Bay Bridge night sky (Orion/Canis Major), Treasure Island SF."
     },
     {
       "content_hash_prefix": "4a6d1ffdae33240c",
@@ -15,7 +15,7 @@
       "approximate_lat_deg": 10.291024,
       "lat_uncertainty_deg": 1.0,
       "matched_star_count": 12,
-      "message": "CC0 — Kyle Devaras, Lapu-Lapu Philippines star field."
+      "message": "CC0 \u2014 Kyle Devaras, Lapu-Lapu Philippines star field."
     },
     {
       "content_hash_prefix": "835fccec287d6d8a",
@@ -23,7 +23,7 @@
       "approximate_lat_deg": 36.443648,
       "lat_uncertainty_deg": 1.0,
       "matched_star_count": 12,
-      "message": "CC0 — Wilson Ye, Death Valley USA starry night."
+      "message": "CC0 \u2014 Wilson Ye, Death Valley USA starry night."
     },
     {
       "content_hash_prefix": "d4b004a1036d1a36",
@@ -31,10 +31,14 @@
       "approximate_lat_deg": 49.5833,
       "lat_uncertainty_deg": 1.0,
       "matched_star_count": 12,
-      "message": "CC0 — Markus Spiske, Erlangen Germany night sky."
+      "message": "CC0 \u2014 Markus Spiske, Erlangen Germany night sky."
     },
     {
-      "filename_contains": ["demo_night", "lodestar_night", "night_sky_demo"],
+      "filename_contains": [
+        "demo_night",
+        "lodestar_night",
+        "night_sky_demo"
+      ],
       "true_north_heading_deg": 47.0,
       "approximate_lat_deg": 37.7749,
       "lat_uncertainty_deg": 0.8,
@@ -42,7 +46,11 @@
       "message": "Demo night-sky reference (San Francisco field test)."
     },
     {
-      "filename_contains": ["night", "stars", "sky"],
+      "filename_contains": [
+        "night",
+        "stars",
+        "sky"
+      ],
       "min_detected_stars": 8,
       "true_north_heading_deg": 32.0,
       "approximate_lat_deg": 37.77,

@@ -23,6 +23,9 @@ object AiServiceFactory {
     @Volatile
     private var loadPermanentlyFailed = false
 
+    @Volatile
+    private var lastAttemptedPtePath: String? = null
+
     private fun backend(application: Application): ExecutorchQwenBackend =
         qwenBackend ?: synchronized(this) {
             qwenBackend ?: ExecutorchQwenBackend(application.applicationContext).also { qwenBackend = it }
@@ -49,10 +52,7 @@ object AiServiceFactory {
         return StubAiService()
     }
 
-    /**
-     * Called once per user message. Returns RealAiService only after a successful warm-up;
-     * otherwise StubAiService so SafetyTree + UI keep working without crashing.
-     */
+    /** Called once per user message. Returns RealAiService only after a successful warm-up. */
     suspend fun serviceForQuery(application: Application): AiService {
         if (!BuildConfig.ENABLE_QNN_BACKEND || !QwenModelPaths.isReady(application)) {
             return StubAiService()
@@ -73,6 +73,12 @@ object AiServiceFactory {
     suspend fun warmUp(application: Application): Boolean {
         if (!BuildConfig.ENABLE_QNN_BACKEND || !QwenModelPaths.isReady(application)) return false
         if (npuReady) return true
+        val ptePath = QwenModelPaths.pteFile(application).absolutePath
+        if (ptePath != lastAttemptedPtePath) {
+            lastAttemptedPtePath = ptePath
+            loadPermanentlyFailed = false
+            npuReady = false
+        }
         if (loadPermanentlyFailed) return false
         val ok = runCatching { backend(application).tryLoad() }
             .onFailure { e ->

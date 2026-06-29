@@ -87,8 +87,12 @@ Only do this if the tooling is ready. Otherwise skip it cleanly.
 
 ## Failure-safe fallbacks
 
+> **Full runbook + fix commands:** [`docs/DEMO_SAFE_RUNBOOK.md`](docs/DEMO_SAFE_RUNBOOK.md)  
+> **One-command recovery:** `.\scripts\demo_fix.ps1 -Action stage` (from `QCOM/`)
+
 - **Mic or TTS fails:** type the prompt and keep the negation demo.
 - **Sun not visible:** use the night-sky photo path and say why.
-- **Night-sky import misbehaves:** narrate the expected `STAR_FIX` result from the staged asset; do not fake interaction.
+- **Night-sky import misbehaves:** pick `demo_night_sf_treasure_island.jpg` from Downloads, or run `demo_fix.ps1 -Action stage`; narrate expected `STAR_FIX` ~47° if UI still fails.
+- **Model / NPU crash:** `.\scripts\demo_fix.ps1 -Action install-stub` then type triage only.
 - **Spoof tooling is not ready:** skip it and keep the rest of the flow.
 - **NPU backend does not land:** say "stubbed AI service today" once, confidently, then move on.

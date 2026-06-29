@@ -35,6 +35,7 @@ import com.medic.app.data.GeoMath
 import com.medic.app.data.HospitalWithBearing
 import com.medic.app.nav.PositionSource
 import com.medic.app.ui.AppUiState
+import com.medic.app.core.Severity
 import com.medic.app.ui.components.ChatMessage
 import com.medic.app.ui.components.CompassRing
 import com.medic.app.ui.components.Sender
@@ -107,6 +108,10 @@ private fun ChatBubble(msg: ChatMessage) {
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = if (isUser) Alignment.End else Alignment.Start
     ) {
+        if (msg.severity != null && !isUser) {
+            DemoSeverityChip(msg.severity)
+            Spacer(Modifier.height(4.dp))
+        }
         Box(
             modifier = Modifier
                 .widthIn(max = 300.dp)
@@ -127,6 +132,25 @@ private fun ChatBubble(msg: ChatMessage) {
                 lineHeight = 21.sp
             )
         }
+    }
+}
+
+@Composable
+private fun DemoSeverityChip(severity: Severity) {
+    val (bg, fg, label) = when (severity) {
+        Severity.CRITICAL -> Triple(SgMedical.tile, SgMedical.icon, "CRITICAL")
+        Severity.SERIOUS -> Triple(SgFindNorth.tile, SgFindNorth.icon, "SERIOUS")
+        Severity.MODERATE -> Triple(SgTranslate.tile, SgTranslate.icon, "MODERATE")
+        Severity.MINOR -> Triple(SgHospital.tile, SgHospital.icon, "MINOR")
+        Severity.UNKNOWN -> Triple(SgRaised, SgTextMuted, "UNCLEAR")
+    }
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(bg)
+            .padding(horizontal = 10.dp, vertical = 4.dp)
+    ) {
+        Text(label, color = fg, fontSize = 12.sp, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -344,9 +368,54 @@ fun FindNorthScreen(
             color = SgTextMuted, fontSize = 12.sp, textAlign = TextAlign.Center
         )
 
+        if (night && (state.starNav.processing || state.starNav.message != null)) {
+            Spacer(Modifier.height(12.dp))
+            StarNavDemoPanel(state)
+        }
+
         Spacer(Modifier.height(18.dp))
         DemoSpoofControl(spoofed = spoofed, onSetSpoof = onSetSpoof)
         Spacer(Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun StarNavDemoPanel(state: AppUiState) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(SgFindNorth.tile)
+            .padding(14.dp)
+    ) {
+        Text(
+            if (state.starNav.processing) "Processing night-sky photo…" else "STAR_FIX result",
+            color = SgFindNorth.title,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium
+        )
+        if (!state.starNav.processing) {
+            Spacer(Modifier.height(6.dp))
+            if (state.starNav.detectedStars > 0) {
+                Text(
+                    "Detected stars: ${state.starNav.detectedStars}",
+                    color = SgFindNorth.subtitle,
+                    fontSize = 13.sp
+                )
+            }
+            state.correctedHeadingDeg?.let { h ->
+                Text(
+                    "True north heading: ${h.roundToInt()}° ${GeoMath.bearingToCardinal(h)}",
+                    color = SgFindNorth.title,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            state.starNav.message?.let { msg ->
+                Spacer(Modifier.height(4.dp))
+                Text(msg, color = SgText, fontSize = 13.sp, lineHeight = 18.sp)
+            }
+        }
     }
 }
 

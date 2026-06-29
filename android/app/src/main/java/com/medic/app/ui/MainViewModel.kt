@@ -12,6 +12,8 @@ import com.medic.app.ai.AiServiceFactory
 import com.medic.app.ai.PromptTemplates
 import com.medic.app.ai.TriageOrchestrator
 import com.medic.app.ai.VoiceLoopManager
+import com.medic.app.core.SafetyTree
+import com.medic.app.core.TriageResult
 import com.medic.app.data.CorpusChunk
 import com.medic.app.data.FieldKitItem
 import com.medic.app.data.Hospital
@@ -22,6 +24,8 @@ import com.medic.app.nav.PositionSource
 import com.medic.app.nav.PositionState
 import com.medic.app.nav.PositionStateMachine
 import com.medic.app.nav.SolarCompass
+import com.medic.app.demo.DemoScenario
+import com.medic.app.demo.DemoScenarios
 import com.medic.app.nav.star.StarNavigationPipeline
 import com.medic.app.ui.components.AppSection
 import com.medic.app.ui.components.ChatMessage
@@ -35,6 +39,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.roundToInt
 import java.util.UUID
 
 data class SosSummary(
@@ -84,7 +89,14 @@ data class AppUiState(
     // COMMUNICATE screen state
     val medicText: String = "",
     val casualtyTranslation: String = "",
-    val sosSummary: SosSummary = SosSummary()
+    val sosSummary: SosSummary = SosSummary(),
+
+    /** Live-demo mode — scenarios from the Demo chip next to Offline ready. */
+    val demoModeActive: Boolean = false,
+    val activeDemoScenarioId: String? = null,
+    val demoBanner: String? = null,
+    /** Consumed by SafeGuideApp to switch tab; cleared after navigation. */
+    val demoNavigateTo: String? = null
 )
 
 /**
@@ -102,6 +114,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val hospitals: List<Hospital> = OfflineAssetLoader.loadHospitals(application)
     private val solarCompass get() = SolarCompass(roughLat, roughLon)
     private val starNavigationPipeline by lazy { StarNavigationPipeline(application) }
+
+    /** While demo is active, real GPS must not overwrite Powell St mock fix. */
+    private var demoLocationLocked = false
 
     private val _uiState = MutableStateFlow(AppUiState())
     val uiState: StateFlow<AppUiState> = _uiState.asStateFlow()
@@ -165,39 +180,76 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val userMsg = ChatMessage(id = UUID.randomUUID().toString(), sender = Sender.USER, text = text)
         _uiState.value = _uiState.value.copy(messages = _uiState.value.messages + userMsg)
 
+        // Demo mode: instant SafetyTree + stub text — never touch NPU or mic/TTS.
+        if (_uiState.value.demoModeActive) {
+            appendDemoAssistantReply(text)
+            return
+        }
+
         viewModelScope.launch {
             try {
                 val aiService = AiServiceFactory.serviceForQuery(getApplication())
                 val orchestrator = TriageOrchestrator(aiService, emptyList())
                 val result = orchestrator.handleQuery(text)
+                val (_, bundle) = com.medic.app.ai.QwenModelPaths.resolve(getApplication())
                 val answerText = if (aiService is com.medic.app.ai.StubAiService &&
                     com.medic.app.ai.QwenModelPaths.isReady(getApplication())
                 ) {
-                    "[NPU model unavailable — PTE/runtime mismatch. Showing offline stub.]\n\n${result.llmAnswer}"
+                    "[NPU model unavailable for ${bundle.subdir} — export a matching PTE " +
+                        "(runtime/scripts/export_qwen06_sm8750.sh) or push via push_qwen_models.ps1. " +
+                        "Showing offline stub.]\n\n${result.llmAnswer}"
                 } else {
                     result.llmAnswer
                 }
-                val assistantMsg = ChatMessage(
-                    id = UUID.randomUUID().toString(),
-                    sender = Sender.ASSISTANT,
-                    text = answerText,
-                    severity = result.triage.severity,
-                    citedChunkIds = result.citedChunkIds,
-                    disclaimerShown = true
-                )
-                _uiState.value = _uiState.value.copy(messages = _uiState.value.messages + assistantMsg)
-                voiceLoop.speak(answerText)
+                appendAssistantReply(answerText, result.triage.severity, result.citedChunkIds, speak = true)
             } catch (e: Exception) {
-                val assistantMsg = ChatMessage(
-                    id = UUID.randomUUID().toString(),
-                    sender = Sender.ASSISTANT,
-                    text = "Model error: ${e.message ?: e.javaClass.simpleName}. " +
-                        "If this persists, re-run android/push_qwen_models.ps1 and restart the app.",
-                    disclaimerShown = true
+                appendAssistantReply(
+                    "Model error: ${e.message ?: e.javaClass.simpleName}. " +
+                        "Use Demo mode or type triage prompts offline.",
+                    severity = null,
+                    citedChunkIds = emptyList(),
+                    speak = false
                 )
-                _uiState.value = _uiState.value.copy(messages = _uiState.value.messages + assistantMsg)
             }
         }
+    }
+
+    private fun appendDemoAssistantReply(userText: String) {
+        val triage = SafetyTree.evaluate(userText)
+        val answer = demoAnswerText(userText, triage)
+        appendAssistantReply(answer, triage.severity, emptyList(), speak = false)
+    }
+
+    private fun demoAnswerText(userText: String, triage: TriageResult): String {
+        val body = when {
+            userText.contains("bleeding", ignoreCase = true) ||
+                userText.contains("blood", ignoreCase = true) ->
+                "Apply firm direct pressure with a clean cloth. Keep pressure continuous. " +
+                    "If bleeding is severe and does not stop, prepare for evacuation.\n\n" +
+                    triage.directive
+            userText.contains("burn", ignoreCase = true) ->
+                "Cool the burn with clean water if safe to do so. Cover loosely. Monitor for shock."
+            else -> triage.directive
+        }
+        return "[DEMO — offline stub]\n\n$body\n\nReference / triage only — not a diagnosis."
+    }
+
+    private fun appendAssistantReply(
+        text: String,
+        severity: com.medic.app.core.Severity?,
+        citedChunkIds: List<String>,
+        speak: Boolean
+    ) {
+        val assistantMsg = ChatMessage(
+            id = UUID.randomUUID().toString(),
+            sender = Sender.ASSISTANT,
+            text = text,
+            severity = severity,
+            citedChunkIds = citedChunkIds,
+            disclaimerShown = true
+        )
+        _uiState.value = _uiState.value.copy(messages = _uiState.value.messages + assistantMsg)
+        if (speak) voiceLoop.speak(text)
     }
 
     fun onMicToggle() {
@@ -242,6 +294,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         provider: String? = null,
         ageMillis: Long? = null
     ) {
+        if (demoLocationLocked && provider != "demo") return
         roughLat = lat
         roughLon = lon
         _uiState.value = _uiState.value.copy(
@@ -483,6 +536,169 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val next = PositionStateMachine.transition(current, gpsAvailable, gpsSpoofed)
         _uiState.value = _uiState.value.copy(positionState = next)
         refreshNearestHospitals()
+    }
+
+    fun clearDemoNavigation() {
+        _uiState.value = _uiState.value.copy(demoNavigateTo = null)
+    }
+
+    fun exitDemoMode() {
+        demoLocationLocked = false
+        _uiState.value = _uiState.value.copy(
+            demoModeActive = false,
+            activeDemoScenarioId = null,
+            demoBanner = null
+        )
+        setSpoofDemo(false)
+    }
+
+    /** Run a curated offline demo scenario (no mic / NPU required). */
+    fun runDemoScenario(scenario: DemoScenario) {
+        _uiState.value = _uiState.value.copy(
+            demoModeActive = true,
+            activeDemoScenarioId = scenario.id,
+            demoBanner = scenario.subtitle,
+            demoNavigateTo = scenario.screen.name
+        )
+        when (scenario.id) {
+            "full_powell_field" -> {
+                applyPowellDemoLocation()
+                submitQuery(DemoScenarios.PALM_PROMPT)
+                _uiState.value = _uiState.value.copy(
+                    demoBanner = "CRITICAL shown · tap Hospital tab · head WEST ~0.7 km to Saint Francis"
+                )
+            }
+            "hospitals_powell" -> {
+                applyPowellDemoLocation()
+                _uiState.value = _uiState.value.copy(
+                    demoBanner = "Saint Francis Memorial ~0.7 km WEST (270°)"
+                )
+            }
+            "negation_critical" -> {
+                submitQuery(DemoScenarios.NEGATION_CRITICAL)
+                _uiState.value = _uiState.value.copy(demoBanner = "CRITICAL — hasn't stopped")
+            }
+            "negation_serious" -> {
+                submitQuery(DemoScenarios.NEGATION_SERIOUS)
+                _uiState.value = _uiState.value.copy(demoBanner = "SERIOUS — has stopped now")
+            }
+            "night_sky_star_fix" -> {
+                _uiState.value = _uiState.value.copy(orientNavMode = OrientNavMode.NIGHT_SKY)
+                runDemoNightSkyAsset("demo/demo_night_sf_treasure_island.jpg", "demo_night_sf_treasure_island.jpg")
+            }
+            "wound_photo" -> runDemoWoundAsset("demo/demo_wounded_hand.jpg")
+        }
+    }
+
+    /** During demo, keep Powell St fix instead of overwriting with live GPS. */
+    fun onUseMyLocationClicked(refreshRealLocation: () -> Unit) {
+        if (demoLocationLocked) {
+            applyPowellDemoLocation()
+        } else {
+            refreshRealLocation()
+        }
+    }
+
+    private fun applyPowellDemoLocation() {
+        demoLocationLocked = true
+        updateRoughLocation(DemoScenarios.POWELL_LAT, DemoScenarios.POWELL_LON, accuracyMeters = 8f, provider = "demo")
+    }
+
+    private fun runDemoNightSkyAsset(assetPath: String, fileName: String) {
+        val app = getApplication<Application>()
+        _uiState.value = _uiState.value.copy(
+            orientNavMode = OrientNavMode.NIGHT_SKY,
+            starNav = StarNavUiState(processing = true, message = "Demo image…")
+        )
+        viewModelScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                val bitmap = app.assets.open(assetPath).use { stream ->
+                    android.graphics.BitmapFactory.decodeStream(stream)
+                } ?: return@withContext null
+                try {
+                    val digest = java.security.MessageDigest.getInstance("SHA-256")
+                    app.assets.open(assetPath).use { stream ->
+                        val buf = ByteArray(8192)
+                        while (true) {
+                            val n = stream.read(buf)
+                            if (n <= 0) break
+                            digest.update(buf, 0, n)
+                        }
+                    }
+                    val hash = digest.digest().joinToString("") { "%02x".format(it) }
+                    starNavigationPipeline.process(
+                        bitmap = bitmap,
+                        imageFileName = fileName,
+                        contentHashHex = hash,
+                        devicePitchDeg = 0.0,
+                        deviceAzimuthDeg = _uiState.value.liveHeadingDeg ?: 0.0
+                    )
+                } finally {
+                    bitmap.recycle()
+                }
+            }
+            if (result == null) {
+                applyCelestialHeading(47.0, PositionSource.STAR_FIX)
+                _uiState.value = _uiState.value.copy(
+                    starNav = StarNavUiState(
+                        processing = false,
+                        detectedStars = 0,
+                        message = "Demo STAR_FIX — Treasure Island SF (~47° true north).",
+                        approximateLat = 37.8147,
+                        latUncertainty = 1.0,
+                        solverKind = "demo-fallback"
+                    ),
+                    demoBanner = "STAR_FIX ~47° · night sky demo complete"
+                )
+                return@launch
+            }
+            val solve = result.solve
+            if (solve.success && solve.trueNorthHeadingDeg != null) {
+                applyCelestialHeading(solve.trueNorthHeadingDeg, PositionSource.STAR_FIX)
+                _uiState.value = _uiState.value.copy(
+                    starNav = StarNavUiState(
+                        processing = false,
+                        detectedStars = result.detection.stars.size,
+                        message = solve.message,
+                        approximateLat = solve.approximateLatDeg,
+                        latUncertainty = solve.latUncertaintyDeg,
+                        solverKind = solve.solverKind
+                    ),
+                    demoBanner = "STAR_FIX ${solve.trueNorthHeadingDeg.roundToInt()}° · ${result.detection.stars.size} stars"
+                )
+            } else {
+                applyCelestialHeading(47.0, PositionSource.STAR_FIX)
+                _uiState.value = _uiState.value.copy(
+                    starNav = StarNavUiState(
+                        processing = false,
+                        detectedStars = result.detection.stars.size,
+                        message = "Demo STAR_FIX — Treasure Island SF (~47° true north).",
+                        approximateLat = 37.8147,
+                        latUncertainty = 1.0,
+                        solverKind = "demo-fallback"
+                    ),
+                    demoBanner = "STAR_FIX ~47° · night sky demo complete"
+                )
+            }
+        }
+    }
+
+    private fun runDemoWoundAsset(assetPath: String) {
+        _uiState.value = _uiState.value.copy(woundAnalyzing = true, woundAssessment = null, woundImage = null)
+        val app = getApplication<Application>()
+        viewModelScope.launch {
+            val bitmap = withContext(Dispatchers.IO) {
+                app.assets.open(assetPath).use { stream ->
+                    android.graphics.BitmapFactory.decodeStream(stream)?.let { downscale(it, 1080) }
+                }
+            }
+            _uiState.value = _uiState.value.copy(
+                woundImage = bitmap?.asImageBitmap(),
+                woundAnalyzing = false,
+                woundAssessment = woundCheckReference(),
+                demoBanner = "Wound photo loaded — infection checklist (not diagnosis)"
+            )
+        }
     }
 
     override fun onCleared() {

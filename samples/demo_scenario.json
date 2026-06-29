@@ -1,0 +1,41 @@
+{
+  "scenario_title": "Powell Street palm laceration \u2014 offline triage + hospital heading",
+  "field_position": {
+    "location_label": "Powell Street at Sutter Street, Union Square, San Francisco, CA",
+    "lat": 37.789261,
+    "lon": -122.408653,
+    "camera_heading_deg": 337.02,
+    "source_page": "https://commons.wikimedia.org/wiki/File:Powell_Street_from_Sutter_Street_(San_Francisco)_July_2022.JPG"
+  },
+  "nearest_hospitals": [
+    {
+      "name": "Saint Francis Memorial Hospital",
+      "latitude": 37.7893,
+      "longitude": -122.4166,
+      "distance_km": 0.7,
+      "bearing_deg": 270.4,
+      "cardinal": "W"
+    },
+    {
+      "name": "Chinese Hospital",
+      "latitude": 37.7956,
+      "longitude": -122.4089,
+      "distance_km": 0.71,
+      "bearing_deg": 358.2,
+      "cardinal": "N"
+    },
+    {
+      "name": "CPMC Van Ness Campus",
+      "latitude": 37.7865,
+      "longitude": -122.4212,
+      "distance_km": 1.14,
+      "bearing_deg": 254.4,
+      "cardinal": "W"
+    }
+  ],
+  "user_prompt_text": "I fell on the sidewalk and cut my palm \u2014 there's a lot of blood and it hasn't stopped. I'm near Powell Street in San Francisco and GPS is unreliable.",
+  "user_prompt_with_image": "Show demo_wounded_hand.jpg to the judge, then type the prompt above in TREAT.",
+  "expected_safety_tree": "CRITICAL",
+  "expected_orient_line": "From Powell & Sutter (37.789261, -122.408653): nearest help is Saint Francis Memorial Hospital \u2014 0.7 km, head W (~270.4\u00b0 true).",
+  "narrator_close": "Move W (~270\u00b0) toward Saint Francis Memorial Hospital \u2014 about 0.7 km by great-circle, offline from our baked hospital list."
+}

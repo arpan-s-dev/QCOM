@@ -5,8 +5,8 @@ import android.util.Log
 import java.io.File
 
 /**
- * On-device paths for the pre-exported Qwen3 1.7B hybrid PTE (SM8750).
- * The 1.7GB .pte is too large for APK assets — push once via [android/push_qwen_models.ps1].
+ * On-device paths for pre-exported Qwen3 hybrid PTE bundles (SM8750 / QNN).
+ * Models are pushed via [android/push_qwen_models.ps1] — too large for APK assets.
  */
 object QwenModelPaths {
     private const val TAG = "QwenModelPaths"
@@ -14,71 +14,84 @@ object QwenModelPaths {
     const val PTE_NAME = "hybrid_llama_qnn.pte"
     const val TOKENIZER_NAME = "tokenizer.json"
     const val CHAT_TEMPLATE_NAME = "chat_template.jinja"
-    const val MAX_SEQ_LEN = 4096
 
-    private const val MODEL_SUBDIR = "qwen3-1_7b"
-    private const val MIN_PTE_BYTES = 1_000_000_000L
-    private const val MIN_TOKENIZER_BYTES = 1_000L
+    /** Bundles we accept, in preference order (0.6B export matches our ExecuTorch v1.0.0 toolchain). */
+    private val MODEL_BUNDLES = listOf(
+        ModelBundle("qwen3-0_6b", minPteBytes = 400_000_000L, maxSeqLen = 1024),
+        ModelBundle("qwen3-1_7b", minPteBytes = 1_000_000_000L, maxSeqLen = 4096),
+    )
 
-    /** App-scoped external dir (adb push target). */
-    fun stagingDir(context: Context): File =
-        File("/storage/emulated/0/Android/data/${context.packageName}/files/models/$MODEL_SUBDIR")
+    internal data class ModelBundle(
+        val subdir: String,
+        val minPteBytes: Long,
+        val maxSeqLen: Int,
+    )
 
-    /** Preferred writable dir under app external storage, with internal fallback. */
-    fun preferredDir(context: Context): File {
+    @Volatile
+    private var resolved: Pair<File, ModelBundle>? = null
+
+    /** App-scoped external dir (legacy adb push target). */
+    fun stagingDir(context: Context, subdir: String): File =
+        File("/storage/emulated/0/Android/data/${context.packageName}/files/models/$subdir")
+
+    fun preferredDir(context: Context, subdir: String): File {
         val base = context.getExternalFilesDir("models")
             ?: context.getExternalFilesDir(null)?.let { File(it, "models") }
             ?: File(context.filesDir, "models")
-        return File(base, MODEL_SUBDIR).apply { mkdirs() }
+        return File(base, subdir).apply { mkdirs() }
     }
 
-    /** First directory that actually contains a valid PTE + tokenizer bundle. */
-    fun resolveModelDir(context: Context): File {
-        // Internal app-owned copy first — adb-pushed external files are often invisible to the app process.
-        val candidates = listOf(
-            File(context.filesDir, "models/$MODEL_SUBDIR"),
-            preferredDir(context),
-            stagingDir(context),
-        )
-        for (dir in candidates) {
-            if (bundleValid(dir)) {
-                Log.i(TAG, "Using model dir: ${dir.absolutePath}")
-                return dir
+    private fun candidates(context: Context, subdir: String): List<File> = listOf(
+        File(context.filesDir, "models/$subdir"),
+        preferredDir(context, subdir),
+        stagingDir(context, subdir),
+    )
+
+    /** First valid bundle directory and its metadata. */
+    internal fun resolve(context: Context): Pair<File, ModelBundle> {
+        resolved?.let { return it }
+        synchronized(this) {
+            resolved?.let { return it }
+            for (bundle in MODEL_BUNDLES) {
+                for (dir in candidates(context, bundle.subdir)) {
+                    if (bundleValid(dir, bundle)) {
+                        Log.i(TAG, "Using ${bundle.subdir} at ${dir.absolutePath} (maxSeq=${bundle.maxSeqLen})")
+                        return Pair(dir, bundle).also { resolved = it }
+                    }
+                }
             }
+            val fallback = preferredDir(context, MODEL_BUNDLES.last().subdir)
+            Log.w(TAG, "No valid Qwen bundle — run android/push_qwen_models.ps1")
+            return Pair(fallback, MODEL_BUNDLES.last())
         }
-        val fallback = preferredDir(context)
-        Log.w(
-            TAG,
-            "Qwen bundle not found. preferred=${fallback.absolutePath} staging=${stagingDir(context).absolutePath}"
-        )
-        return fallback
     }
+
+    fun resolveModelDir(context: Context): File = resolve(context).first
+
+    fun maxSeqLen(context: Context): Int = resolve(context).second.maxSeqLen
 
     fun pteFile(context: Context): File = File(resolveModelDir(context), PTE_NAME)
 
     fun tokenizerFile(context: Context): File = File(resolveModelDir(context), TOKENIZER_NAME)
 
     fun isReady(context: Context): Boolean {
-        val dir = resolveModelDir(context)
-        val ready = bundleValid(dir)
-        if (!ready) {
-            val pte = File(dir, PTE_NAME)
-            val tok = File(dir, TOKENIZER_NAME)
-            Log.w(
-                TAG,
-                "isReady=false dir=${dir.absolutePath} " +
-                    "pteExists=${pte.exists()} pteFile=${pte.isFile} pteLen=${pte.length()} " +
-                    "tokExists=${tok.exists()} tokFile=${tok.isFile} tokLen=${tok.length()} " +
-                    "extFilesDir=${context.getExternalFilesDir("models")?.absolutePath}"
-            )
+        for (bundle in MODEL_BUNDLES) {
+            for (dir in candidates(context, bundle.subdir)) {
+                if (bundleValid(dir, bundle)) return true
+            }
         }
-        return ready
+        return false
     }
 
-    private fun bundleValid(dir: File): Boolean {
+    /** Clear cached resolution after pushing a new model without restarting the app. */
+    fun invalidateCache() {
+        synchronized(this) { resolved = null }
+    }
+
+    private fun bundleValid(dir: File, bundle: ModelBundle): Boolean {
         val pte = File(dir, PTE_NAME)
         val tok = File(dir, TOKENIZER_NAME)
-        return pte.isFile && pte.length() > MIN_PTE_BYTES &&
-            tok.isFile && tok.length() > MIN_TOKENIZER_BYTES
+        return pte.isFile && pte.length() > bundle.minPteBytes &&
+            tok.isFile && tok.length() > 1_000L
     }
 }
