@@ -94,9 +94,6 @@ data class AppUiState(
  */
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val aiService: AiService = AiServiceFactory.create(application, viewModelScope)
-    private val corpus: List<CorpusChunk> = emptyList()  // <-- populate from bundled corpus + vectors asset at startup
-    private val orchestrator = TriageOrchestrator(aiService, corpus)
     private val voiceLoop = VoiceLoopManager(application)
 
     // Cached last-known fix (simulates pre-jam GPS) refined by heading/DR elsewhere.
@@ -110,6 +107,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val uiState: StateFlow<AppUiState> = _uiState.asStateFlow()
 
     init {
+        AiServiceFactory.create(application, viewModelScope)
         voiceLoop.initTts()
         val (kitDisclaimer, kitItems) = OfflineAssetLoader.loadFieldKit(getApplication())
         _uiState.value = _uiState.value.copy(
@@ -168,17 +166,37 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.value = _uiState.value.copy(messages = _uiState.value.messages + userMsg)
 
         viewModelScope.launch {
-            val result = orchestrator.handleQuery(text)
-            val assistantMsg = ChatMessage(
-                id = UUID.randomUUID().toString(),
-                sender = Sender.ASSISTANT,
-                text = result.llmAnswer,
-                severity = result.triage.severity,
-                citedChunkIds = result.citedChunkIds,
-                disclaimerShown = true
-            )
-            _uiState.value = _uiState.value.copy(messages = _uiState.value.messages + assistantMsg)
-            voiceLoop.speak(result.llmAnswer)
+            try {
+                val aiService = AiServiceFactory.serviceForQuery(getApplication())
+                val orchestrator = TriageOrchestrator(aiService, emptyList())
+                val result = orchestrator.handleQuery(text)
+                val answerText = if (aiService is com.medic.app.ai.StubAiService &&
+                    com.medic.app.ai.QwenModelPaths.isReady(getApplication())
+                ) {
+                    "[NPU model unavailable — PTE/runtime mismatch. Showing offline stub.]\n\n${result.llmAnswer}"
+                } else {
+                    result.llmAnswer
+                }
+                val assistantMsg = ChatMessage(
+                    id = UUID.randomUUID().toString(),
+                    sender = Sender.ASSISTANT,
+                    text = answerText,
+                    severity = result.triage.severity,
+                    citedChunkIds = result.citedChunkIds,
+                    disclaimerShown = true
+                )
+                _uiState.value = _uiState.value.copy(messages = _uiState.value.messages + assistantMsg)
+                voiceLoop.speak(answerText)
+            } catch (e: Exception) {
+                val assistantMsg = ChatMessage(
+                    id = UUID.randomUUID().toString(),
+                    sender = Sender.ASSISTANT,
+                    text = "Model error: ${e.message ?: e.javaClass.simpleName}. " +
+                        "If this persists, re-run android/push_qwen_models.ps1 and restart the app.",
+                    disclaimerShown = true
+                )
+                _uiState.value = _uiState.value.copy(messages = _uiState.value.messages + assistantMsg)
+            }
         }
     }
 
@@ -190,7 +208,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val pcm = voiceLoop.recordUntilStopped(isCancelled = { !_uiState.value.isListening })
             _uiState.value = _uiState.value.copy(isListening = false)
-            val transcript = aiService.transcribe(pcm)
+            val transcript = AiServiceFactory.create(getApplication(), viewModelScope).transcribe(pcm)
             if (transcript.isNotBlank()) {
                 submitQuery(transcript)
             }
@@ -253,6 +271,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun updateLiveHeading(deg: Double) {
         if (_uiState.value.liveHeadingDeg?.toInt() == deg.toInt()) return
         _uiState.value = _uiState.value.copy(liveHeadingDeg = deg)
+    }
+
+    /**
+     * Demo control: simulate (or clear) a GPS spoofing attack so the position
+     * state machine's fallback to dead reckoning can be shown live. Routes
+     * through the same [updatePositionState] the real spoof detector would use.
+     */
+    fun setSpoofDemo(spoofed: Boolean) {
+        updatePositionState(gpsAvailable = true, gpsSpoofed = spoofed)
     }
 
     /**
@@ -398,7 +425,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val text = _uiState.value.medicText.trim()
         if (text.isEmpty()) return
         viewModelScope.launch {
-            val translation = aiService.translate(text, fromLang, toLang)
+            val stub = AiServiceFactory.create(getApplication(), viewModelScope)
+            val translation = stub.translate(text, fromLang, toLang)
             _uiState.value = _uiState.value.copy(casualtyTranslation = translation)
         }
     }
@@ -418,8 +446,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             ?.severity?.name ?: "UNKNOWN"
 
         viewModelScope.launch {
+            val stub = AiServiceFactory.create(getApplication(), viewModelScope)
             val prompt = PromptTemplates.sosSummary(context)
-            val raw = aiService.generate(prompt)
+            val raw = stub.generate(prompt)
             _uiState.value = _uiState.value.copy(sosSummary = parseSosSummary(raw, lastSeverity))
         }
     }

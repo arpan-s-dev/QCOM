@@ -15,7 +15,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.lifecycleScope
 import com.facebook.soloader.SoLoader
+import com.medic.app.ai.AiServiceFactory
 import com.medic.app.nav.ApproximateLocationProvider
 import com.medic.app.nav.DeviceOrientationReader
 import com.medic.app.ui.MainViewModel
@@ -84,12 +86,23 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        SoLoader.init(this, false)
-        try {
-            Os.setenv("ADSP_LIBRARY_PATH", applicationInfo.nativeLibraryDir, true)
-            Os.setenv("LD_LIBRARY_PATH", applicationInfo.nativeLibraryDir, true)
-        } catch (e: ErrnoException) {
-            Log.e("MainActivity", "QNN native library path setup failed", e)
+        if (BuildConfig.ENABLE_QNN_BACKEND) {
+            try {
+                SoLoader.init(this, false)
+                val nativeLibDir = applicationInfo.nativeLibraryDir
+                Os.setenv("ADSP_LIBRARY_PATH", nativeLibDir, true)
+                Os.setenv("LD_LIBRARY_PATH", nativeLibDir, true)
+                Log.i("MainActivity", "QNN native lib dir: $nativeLibDir")
+            } catch (e: ErrnoException) {
+                Log.e("MainActivity", "QNN native library path setup failed", e)
+            } catch (e: UnsatisfiedLinkError) {
+                Log.e("MainActivity", "ExecuTorch/QNN native libs unavailable — UI will use stubs", e)
+            } catch (e: Exception) {
+                Log.e("MainActivity", "NPU init failed — UI will use stubs", e)
+            }
+            AiServiceFactory.preload(application, lifecycleScope)
+        } else {
+            Log.i("MainActivity", "NPU backend disabled — skipping SoLoader and model preload")
         }
         orientationReader = DeviceOrientationReader(this)
         locationProvider = ApproximateLocationProvider(this)
@@ -130,6 +143,7 @@ class MainActivity : ComponentActivity() {
                             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                         )
                     },
+                    onSetSpoof = viewModel::setSpoofDemo,
                     onMedicTextChange = viewModel::onMedicTextChange,
                     onTranslate = { viewModel.onTranslate() }
                 )

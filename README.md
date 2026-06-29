@@ -64,23 +64,27 @@ See **`SETUP.md`** — must be on branch `integrate/lodestar-v1` with `runtime/`
 
 ```mermaid
 flowchart TD
-    subgraph UI["UI (Compose)"]
-        SS[StatusStrip]
-        SW[TREAT / ORIENT / COMMUNICATE]
+    subgraph ui["UI (Compose)"]
+        SS["SafeGuideApp"]
+        VM["MainViewModel"]
     end
-    subgraph CORE["Deterministic logic"]
-        ST[SafetyTree]
-        SC[SolarCompass]
-        SN[StarDetector + StarSolver]
-        SD[SpoofDetector]
+    subgraph core["Deterministic logic"]
+        ST["SafetyTree + TriageOrchestrator"]
+        SC["SolarCompass"]
+        SN["StarDetector + StarSolver"]
+        SD["SpoofDetector + PositionStateMachine"]
+        HF["HospitalFinder"]
     end
-    subgraph AI["AiService interface"]
-        STUB[StubAiService]
-        REAL[RealAiService - P1]
+    subgraph aiSvc["AiService"]
+        AF["AiServiceFactory"]
+        STUB["StubAiService"]
+        REAL["RealAiService (Qwen NPU)"]
     end
-    UI --> CORE
-    UI --> AI
-    STUB -.-> REAL
+    SS --> VM
+    VM --> core
+    VM --> aiSvc
+    AF --> STUB
+    AF --> REAL
 ```
 
 Full diagram and details in Person 2's original README sections — see `android/` source and
@@ -90,9 +94,10 @@ Full diagram and details in Person 2's original README sections — see `android
 
 ## Swapping in real models (Person 1)
 
-In `android/app/src/main/java/com/medic/app/ui/MainViewModel.kt`:
+`AiServiceFactory` in `android/app/src/main/java/com/medic/app/ai/AiServiceFactory.kt`
+auto-picks **RealAiService** when the Qwen PTE is on device, otherwise **StubAiService**:
 ```kotlin
-private val aiService: AiService = StubAiService()  // → RealAiService()
+private val aiService: AiService = AiServiceFactory.create(application, viewModelScope)
 ```
 
 Interface: `android/app/src/main/java/com/medic/app/ai/AiService.kt` (see `DECISIONS.md`).

@@ -16,7 +16,7 @@ import org.pytorch.executorch.extension.llm.LlmModule
  */
 class ExecutorchQwenBackend(
     private val context: Context,
-    private val dispatcher: CoroutineDispatcher = Dispatchers.Default
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : OnDeviceModelBackend {
 
     private val loadMutex = Mutex()
@@ -26,14 +26,15 @@ class ExecutorchQwenBackend(
     override val status: OnDeviceBackendStatus
         get() = OnDeviceBackendStatus(
             backendName = if (loaded) "executorch-qwen3-1.7b-qnn" else "executorch-qwen3 (not loaded)",
-            loadedCapabilities = if (loaded) {
-                setOf(OnDeviceCapability.GENERATE)
-            } else {
-                emptySet()
+            // Advertise GENERATE when PTE is on disk so RealAiService reaches tryLoad().
+            loadedCapabilities = buildSet {
+                if (loaded || QwenModelPaths.isReady(context)) {
+                    add(OnDeviceCapability.GENERATE)
+                }
             }
         )
 
-    /** Load PTE from app storage. Returns false if files missing (caller keeps StubAiService). */
+    /** Load PTE from app storage. Returns false if files missing or native load fails. */
     suspend fun tryLoad(): Boolean = loadMutex.withLock {
         if (loaded) return true
         if (!QwenModelPaths.isReady(context)) {
@@ -44,13 +45,22 @@ class ExecutorchQwenBackend(
             try {
                 val pte = QwenModelPaths.pteFile(context).absolutePath
                 val tok = QwenModelPaths.tokenizerFile(context).absolutePath
-                Log.i(TAG, "Loading Qwen PTE from $pte")
-                val llm = LlmModule(QNN_TEXT_MODEL, pte, tok, TEMPERATURE)
-                llm.load()
+                Log.i(TAG, "Loading Qwen PTE from $pte with QNN config: $QNN_CONFIG")
+                val llm = LlmModule(QNN_TEXT_MODEL, pte, tok, TEMPERATURE, QNN_CONFIG)
+                val loadResult = llm.load()
+                if (loadResult != 0) {
+                    Log.e(TAG, "Qwen load() failed with error code $loadResult")
+                    return@withContext false
+                }
                 module = llm
                 loaded = true
-                Log.i(TAG, "Qwen NPU model loaded")
+                Log.i(TAG, "Qwen NPU model loaded successfully")
                 true
+            } catch (e: UnsatisfiedLinkError) {
+                Log.e(TAG, "QNN native library load failed — check qnn-runtime version in gradle.properties", e)
+                module = null
+                loaded = false
+                false
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to load Qwen PTE", e)
                 module = null
@@ -60,8 +70,12 @@ class ExecutorchQwenBackend(
         }
     }
 
-    override suspend fun embed(text: String): FloatArray =
-        unavailable(OnDeviceCapability.EMBED)
+    override suspend fun embed(text: String): FloatArray {
+        // BGE not wired yet — deterministic stub so triage/RAG plumbing works offline.
+        val dim = 384
+        val rng = java.util.Random(text.hashCode().toLong())
+        return FloatArray(dim) { rng.nextFloat() * 2f - 1f }
+    }
 
     override suspend fun generate(prompt: String): String = withContext(dispatcher) {
         if (!loaded && !tryLoad()) {
@@ -108,5 +122,8 @@ class ExecutorchQwenBackend(
         /** Same as LlamaDemo ModelUtils.QNN_TEXT_MODEL for Qualcomm hybrid/kv pte. */
         private const val QNN_TEXT_MODEL = 4
         private const val TEMPERATURE = 0.3f
+        /** Required for Qwen3 hybrid PTE on QNN — see LlamaDemo buildQnnConfigString(). */
+        private const val QNN_CONFIG =
+            "decoder_model_version:qwen3;kv_updater:SmartMask;eval_mode:1"
     }
 }

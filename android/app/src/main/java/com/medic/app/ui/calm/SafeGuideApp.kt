@@ -64,6 +64,7 @@ fun SafeGuideApp(
     onSightSun: () -> Unit,
     onPickNightSkyImage: () -> Unit,
     onAddWoundPhoto: () -> Unit,
+    onSetSpoof: (Boolean) -> Unit,
     onMedicTextChange: (String) -> Unit,
     onTranslate: () -> Unit,
     modifier: Modifier = Modifier
@@ -96,7 +97,7 @@ fun SafeGuideApp(
                         SgScreen.HOME -> HomeScreen(onSelect = { screen = it })
                         SgScreen.ASSISTANT -> AssistantScreen(state, onInputChange, onSend, onMicToggle)
                         SgScreen.TRANSLATE -> TranslateScreen(state, onMedicTextChange, onTranslate)
-                        SgScreen.LOCATION -> FindNorthScreen(state, onOrientNavModeChange, onUseMyLocation, onSightSun, onPickNightSkyImage)
+                        SgScreen.LOCATION -> FindNorthScreen(state, onOrientNavModeChange, onUseMyLocation, onSightSun, onPickNightSkyImage, onSetSpoof)
                         SgScreen.MEDICAL -> MedicalScreen(state, onAddWoundPhoto)
                         SgScreen.HOSPITAL -> HospitalScreen(
                             state = state,

@@ -29,8 +29,12 @@ class TriageOrchestrator(
     suspend fun handleQuery(userQuery: String): TriagePipelineResult {
         val triage = SafetyTree.evaluate(userQuery)
 
-        val queryEmbedding = aiService.embed(userQuery)
-        val retrieved = Retriever.topK(queryEmbedding, corpus, k = 4)
+        val retrieved = if (corpus.isEmpty()) {
+            emptyList()
+        } else {
+            val queryEmbedding = aiService.embed(userQuery)
+            Retriever.topK(queryEmbedding, corpus, k = 4)
+        }
 
         val prompt = PromptTemplates.groundedFirstAid(userQuery, retrieved, triage)
         val answer = aiService.generate(prompt)
